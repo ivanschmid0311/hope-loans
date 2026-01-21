@@ -176,6 +176,7 @@
                         <button id="navLoans" data-nav class="px-4 py-2 hover:text-indigo-600">Loans</button>
                         <button id="navRequests" data-nav class="px-4 py-2 hover:text-indigo-600">Requests</button>
                         <button id="navReminders" data-nav class="px-4 py-2 hover:text-indigo-600">Payment Reminders</button>
+                        <button id="navBalance" data-nav class="px-4 py-2 hover:text-indigo-600">Balance</button>
                         <button id="navCreate" data-nav class="px-4 py-2 hover:text-indigo-600">Create Loan</button>
                         <button id="navSettings" data-nav class="px-4 py-2 hover:text-indigo-600">Settings</button>
                     </div>
@@ -365,6 +366,10 @@
                     <button id="addRateBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Add Year Rate</button>
                 </div>
             </div>
+            <!-- Balance View -->
+<div id="balanceView" data-view class="hidden">
+    <iframe src="balance.html" style="width: 100%; height: calc(100vh - 200px); border: none; background: white; border-radius: 12px;"></iframe>
+</div>
         </div>
     </div>
 
@@ -396,6 +401,7 @@
             'ivan@hope.org': {role: 'admin', name: 'Ivan'},
             'isaac@hope.org': {role: 'admin', name: 'Isaac'},
             'ida@hope.org': {role: 'admin', name: 'Ida'},
+            'oli@hope.org': {role: 'admin', name: 'Oli'},
             'suresh@hope.org': {role: 'collector', name: 'Suresh'},
             'edward@hope.org': {role: 'collector', name: 'Edward'}
         };
@@ -537,6 +543,7 @@
             document.getElementById('navLoans').onclick = () => switchView('loans');
             document.getElementById('navRequests').onclick = () => switchView('requests');
             document.getElementById('navReminders').onclick = () => switchView('reminders');
+            document.getElementById('navBalance').onclick = () => switchView('balance');
             document.getElementById('navCreate').onclick = () => switchView('create');
             document.getElementById('navSettings').onclick = () => switchView('settings');
             document.getElementById('createLoanBtn').onclick = createLoan;
