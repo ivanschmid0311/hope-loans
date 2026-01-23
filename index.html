@@ -384,6 +384,22 @@
 <div id="balanceView" data-view class="hidden">
     <iframe src="balance.html" style="width: 100%; height: calc(100vh - 200px); border: none; background: white; border-radius: 12px;"></iframe>
 </div>
+            <!-- Support View -->
+        <div id="supportView" data-view class="hidden">
+            <iframe src="support.html" style="width: 100%; height: calc(100vh - 200px); border: none; background: white; border-radius: 12px;"></iframe>
+        </div>
+```
+
+So it will look like:
+```
+385         <iframe src="balance.html" style="..."></iframe>
+386     </div>
+NEW         <!-- Support View -->
+NEW         <div id="supportView" data-view class="hidden">
+NEW             <iframe src="support.html" style="width: 100%; height: calc(100vh - 200px); border: none; background: white; border-radius: 12px;"></iframe>
+NEW         </div>
+387         </div>
+388     </div>
         </div>
     </div>
 
@@ -558,6 +574,7 @@
             document.getElementById('navRequests').onclick = () => switchView('requests');
             document.getElementById('navReminders').onclick = () => switchView('reminders');
             document.getElementById('navBalance').onclick = () => switchView('balance');
+            document.getElementById('navSupport').onclick = () => switchView('support');
             document.getElementById('navCreate').onclick = () => switchView('create');
             document.getElementById('navSettings').onclick = () => switchView('settings');
             document.getElementById('createLoanBtn').onclick = createLoan;
