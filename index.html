@@ -319,12 +319,15 @@
                     <div class="space-y-4">
                         <input type="text" id="borrowerName" placeholder="Borrower Name" class="w-full px-4 py-2 border rounded-lg">
                         <input type="date" id="loanDate" class="w-full px-4 py-2 border rounded-lg">
-                        <select id="loanPurpose" class="w-full px-4 py-2 border rounded-lg">
-                            <option value="">Select Purpose</option>
-                            <option value="Business">Business</option>
-                            <option value="Housing">Housing</option>
-                            <option value="Education">Education</option>
-                            <option value="Real Estate">Real Estate</option>
+                      <select id="loanPurpose" class="w-full px-4 py-2 border rounded-lg">
+    <option value="">Select Purpose</option>
+    <option value="Business">Business</option>
+    <option value="Housing">Housing</option>
+    <option value="Education">Education</option>
+    <option value="Real Estate">Real Estate</option>
+    <option value="Debt Clearance">Debt Clearance</option>
+    <option value="Vehicle">Vehicle</option>
+</select>
                         </select>
                         <input type="text" id="loanGiver" placeholder="Loan Giver" class="w-full px-4 py-2 border rounded-lg">
                         <select id="loanCollector" class="w-full px-4 py-2 border rounded-lg">
@@ -1148,7 +1151,7 @@
                     loansHtml += '<strong>Loan ' + (i + 1) + ': ' + l.purpose + '</strong>';
                     loansHtml += '<p class="text-sm"><strong>Loan Giver:</strong> ' + (l.loan_giver || 'N/A') + '</p>';
                     loansHtml += collectorInfo;
-                    loansHtml += '<p class="text-sm">Amount: ' + l.currency + ' ' + l.amount.toLocaleString() + rateInfo + ' | Paid: ₹' + s.paid.toLocaleString('en-IN') + ' | Remaining: ₹' + s.remaining.toLocaleString('en-IN') + '</p>';
+                    loansHtml += '<p class="text-sm">Amount: ' + l.currency + ' ' + l.amount.toLocaleString() + rateInfo + ' | Monthly: ₹' + l.monthly_payment.toLocaleString('en-IN') + ' | Date: ' + l.date + ' | Duration: ' + l.months + ' months | Paid: ₹' + s.paid.toLocaleString('en-IN') + ' | Remaining: ₹' + s.remaining.toLocaleString('en-IN') + '</p>';
                     loansHtml += commentsHtml;
                     loansHtml += paymentHistory;
                     loansHtml += '<div class="mt-2 flex gap-2">';
