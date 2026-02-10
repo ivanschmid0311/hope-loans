@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collector Balance Tracking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+        }
+
+        .month-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .month-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .month-btn:hover {
+            background: #5568d3;
+        }
+
+        .current-month {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .collectors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .collector-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .collector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .collector-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .balance-display {
+            text-align: right;
+        }
+
+        .balance-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .balance-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin-top: 5px;
+        }
+
+        .balance-breakdown {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+
+        .breakdown-row.total {
+            border-top: 2px solid #ddd;
+            margin-top: 8px;
+            padding-top: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .breakdown-label {
+            color: #666;
+        }
+
+        .breakdown-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .breakdown-value.positive {
+            color: #28a745;
+        }
+
+        .breakdown-value.negative {
+            color: #dc3545;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .action-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .add-btn:hover {
+            background: #218838;
+        }
+
+        .subtract-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .subtract-btn:hover {
+            background: #c82333;
+        }
+
+        .transactions-section {
+            margin-top: 25px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .transaction-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            padding: 12px;
+            border-left: 3px solid #ddd;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .transaction-item.credit {
+            border-left-color: #28a745;
+        }
+
+        .transaction-item.debit {
+            border-left-color: #dc3545;
+        }
+
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .transaction-amount {
+            font-size: 16px;
+        }
+
+        .transaction-amount.positive {
+            color: #28a745;
+        }
+
+        .transaction-amount.negative {
+            color: #dc3545;
+        }
+
+        .transaction-note {
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        .transaction-date {
+            color: #999;
+            font-size: 11px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #333;
+            font-size: 22px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .modal-btn.cancel {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .modal-btn.submit {
+            background: #667eea;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .collectors-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .month-selector {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💰 Collector Balance Tracking</h1>
+        <div class="month-selector">
+            <button class="month-btn" onclick="changeMonth(-1)">← Previous</button>
+            <span class="current-month" id="currentMonth">January 2026</span>
+            <button class="month-btn" onclick="changeMonth(1)">Next →</button>
+            <button class="month-btn" onclick="openSetOpeningBalanceModal()" style="background: #28a745;">Set Opening Balance</button>
+        </div>
+    </div>
+
+    <div class="collectors-grid" id="collectorsGrid">
+        <!-- Collector cards will be generated here -->
+    </div>
+
+    <!-- Transaction Modal -->
+    <div class="modal" id="transactionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Transaction</h2>
+            </div>
+            <form id="transactionForm">
+                <div class="form-group">
+                    <label for="amount">Amount (₹)</label>
+                    <input type="number" id="amount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="note">Note (required)</label>
+                    <textarea id="note" required placeholder="Explain the reason for this transaction..."></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="modal-btn submit">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Opening Balance Modal -->
+    <div class="modal" id="openingBalanceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Set Opening Balance</h2>
+                <p style="color: #666; font-size: 14px; margin-top: 10px;">Month: <span id="openingBalanceMonth"></span></p>
+            </div>
+            <form id="openingBalanceForm">
+                <div class="form-group">
+                    <label for="sureshOpening">Suresh Opening Balance (₹)</label>
+                    <input type="number" id="sureshOpening" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="edwardOpening">Edward Opening Balance (₹)</label>
+                    <input type="number" id="edwardOpening" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="samuelOpening">Samuel Opening Balance (₹)</label>
+                    <input type="number" id="samuelOpening" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="irinaOpening">Irina Opening Balance ($)</label>
+                    <input type="number" id="irinaOpening" step="0.01" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn cancel" onclick="closeOpeningBalanceModal()">Cancel</button>
+                    <button type="submit" class="modal-btn submit">Save Opening Balances</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, addDoc, query, where, orderBy, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBq6u09yrCy_2QZJXpuh-RKWo0_5wXsTag",
+            authDomain: "hope-association-loans.firebaseapp.com",
+            projectId: "hope-association-loans",
+            storageBucket: "hope-association-loans.firebasestorage.app",
+            messagingSenderId: "432884261468",
+            appId: "1:432884261468:web:d92185f8bce4f550c17c99"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // State
+        let currentMonth = new Date(2026, 0, 1); // January 2026
+        let currentCollector = null;
+        let currentTransactionType = null;
+
+        // Initialize
+        loadBalances();
+
+        // Change month
+        window.changeMonth = function(direction) {
+            currentMonth.setMonth(currentMonth.getMonth() + direction);
+            updateMonthDisplay();
+            loadBalances();
+        };
+
+        function updateMonthDisplay() {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('currentMonth').textContent = 
+                `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+        }
+
+        // Load balances from Firebase
+        async function loadBalances() {
+            try {
+                const monthKey = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
+                
+                // Load transactions for this month
+                const transactionsRef = collection(db, 'balance_transactions');
+                const q = query(transactionsRef, where('month', '==', monthKey));
+                const snapshot = await getDocs(q);
+                
+                const transactions = {};
+                transactions['Suresh'] = [];
+                transactions['Edward'] = [];
+                transactions['Samuel'] = [];
+                transactions['Irina'] = [];
+                
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    if (transactions[data.collector_name]) {
+                        transactions[data.collector_name].push({
+                            ...data,
+                            id: doc.id
+                        });
+                    }
+                });
+
+                // Get previous month's closing balance
+                const prevMonth = new Date(currentMonth);
+                prevMonth.setMonth(prevMonth.getMonth() - 1);
+                const prevMonthKey = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+                
+                const prevQ = query(transactionsRef, where('month', '==', prevMonthKey));
+                const prevSnapshot = await getDocs(prevQ);
+                
+                const prevBalances = {};
+                prevBalances['Suresh'] = { opening: 0, payments: 0, additions: 0, subtractions: 0 };
+                prevBalances['Edward'] = { opening: 0, payments: 0, additions: 0, subtractions: 0 };
+                prevBalances['Samuel'] = { opening: 0, payments: 0, additions: 0, subtractions: 0 };
+                prevBalances['Irina'] = { opening: 0, payments: 0, additions: 0, subtractions: 0 };
+                
+                // Calculate previous month's closing balances
+                prevSnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const collectorName = data.collector_name;
+                    if (prevBalances.hasOwnProperty(collectorName)) {
+                        if (data.transaction_type === 'opening') {
+                            prevBalances[collectorName].opening = data.amount;
+                        } else if (data.transaction_type === 'payment') {
+                            prevBalances[collectorName].payments += data.amount;
+                        } else if (data.transaction_type === 'addition') {
+                            prevBalances[collectorName].additions += data.amount;
+                        } else if (data.transaction_type === 'subtraction') {
+                            prevBalances[collectorName].subtractions += Math.abs(data.amount);
+                        }
+                    }
+                });
+                
+                // Calculate total closing balance for each collector
+                Object.keys(prevBalances).forEach(name => {
+                    const b = prevBalances[name];
+                    prevBalances[name] = b.opening + b.payments + b.additions - b.subtractions;
+                });
+
+                // Calculate balances
+                const collectors = [
+                    {
+                        name: 'Suresh',
+                        transactions: transactions['Suresh']
+                    },
+                    {
+                        name: 'Edward',
+                        transactions: transactions['Edward']
+                    },
+                    {
+                        name: 'Samuel',
+                        transactions: transactions['Samuel']
+                    },
+                    {
+                        name: 'Irina',
+                        transactions: transactions['Irina']
+                    }
+                ];
+
+                collectors.forEach(collector => {
+                    let openingBalance = 0;
+                    let hasExplicitOpening = false;
+                    let paymentsReceived = 0;
+                    let manualAdditions = 0;
+                    let manualSubtractions = 0;
+
+                    collector.transactions.forEach(t => {
+                        if (t.transaction_type === 'opening') {
+                            openingBalance = t.amount;
+                            hasExplicitOpening = true;
+                        } else if (t.transaction_type === 'payment') {
+                            paymentsReceived += t.amount;
+                        } else if (t.transaction_type === 'addition') {
+                            manualAdditions += t.amount;
+                        } else if (t.transaction_type === 'subtraction') {
+                            manualSubtractions += Math.abs(t.amount);
+                        }
+                    });
+
+                    // If no explicit opening balance set, use previous month's closing balance
+                    if (!hasExplicitOpening) {
+                        openingBalance = prevBalances[collector.name];
+                    }
+
+                    collector.openingBalance = openingBalance;
+                    collector.paymentsReceived = paymentsReceived;
+                    collector.manualAdditions = manualAdditions;
+                    collector.manualSubtractions = manualSubtractions;
+                });
+
+                renderCollectors(collectors);
+            } catch (error) {
+                console.error('Error loading balances:', error);
+                // Show empty collectors if Firebase fails
+                renderCollectors([
+                    {
+                        name: 'Suresh',
+                        openingBalance: 0,
+                        paymentsReceived: 0,
+                        manualAdditions: 0,
+                        manualSubtractions: 0,
+                        transactions: []
+                    },
+                    {
+                        name: 'Edward',
+                        openingBalance: 0,
+                        paymentsReceived: 0,
+                        manualAdditions: 0,
+                        manualSubtractions: 0,
+                        transactions: []
+                    },
+                    {
+                        name: 'Samuel',
+                        openingBalance: 0,
+                        paymentsReceived: 0,
+                        manualAdditions: 0,
+                        manualSubtractions: 0,
+                        transactions: []
+                    },
+                    {
+                        name: 'Irina',
+                        openingBalance: 0,
+                        paymentsReceived: 0,
+                        manualAdditions: 0,
+                        manualSubtractions: 0,
+                        transactions: []
+                    }
+                ]);
+            }
+        }
+
+        function renderCollectors(collectors) {
+            const grid = document.getElementById('collectorsGrid');
+            grid.innerHTML = '';
+
+            collectors.forEach(collector => {
+                const currentBalance = collector.openingBalance + 
+                                     collector.paymentsReceived + 
+                                     collector.manualAdditions - 
+                                     collector.manualSubtractions;
+
+                const card = document.createElement('div');
+                card.className = 'collector-card';
+                card.innerHTML = `
+                    <div class="collector-header">
+                        <div class="collector-name">${collector.name}</div>
+                        <div class="balance-display">
+                            <div class="balance-label">Current Balance</div>
+                            <div class="balance-amount">₹${currentBalance.toLocaleString('en-IN')}</div>
+                        </div>
+                    </div>
+
+                    <div class="balance-breakdown">
+                        <div class="breakdown-row">
+                            <span class="breakdown-label">Opening Balance</span>
+                            <span class="breakdown-value">₹${collector.openingBalance.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span class="breakdown-label">Payments Received</span>
+                            <span class="breakdown-value positive">+₹${collector.paymentsReceived.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span class="breakdown-label">Manual Additions</span>
+                            <span class="breakdown-value positive">+₹${collector.manualAdditions.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span class="breakdown-label">Manual Subtractions</span>
+                            <span class="breakdown-value negative">-₹${collector.manualSubtractions.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div class="breakdown-row total">
+                            <span class="breakdown-label">Closing Balance</span>
+                            <span class="breakdown-value">₹${currentBalance.toLocaleString('en-IN')}</span>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="action-btn add-btn" onclick="openTransactionModal('${collector.name}', 'add')">
+                            ➕ Add Money
+                        </button>
+                        <button class="action-btn subtract-btn" onclick="openTransactionModal('${collector.name}', 'subtract')">
+                            ➖ Subtract Money
+                        </button>
+                    </div>
+
+                    <div class="transactions-section">
+                        <div class="section-title">
+                            <span>Transaction History</span>
+                            <span style="font-size: 14px; color: #666;">${collector.transactions.length} transactions</span>
+                        </div>
+                        <div class="transaction-list">
+                            ${collector.transactions.map(t => `
+                                <div class="transaction-item ${t.transaction_type === 'subtraction' ? 'debit' : 'credit'}">
+                                    <div class="transaction-header">
+                                        <span>${t.transaction_type.charAt(0).toUpperCase() + t.transaction_type.slice(1)}</span>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span class="transaction-amount ${t.amount > 0 ? 'positive' : 'negative'}">
+                                                ${t.amount > 0 ? '+' : ''}₹${Math.abs(t.amount).toLocaleString('en-IN')}
+                                            </span>
+                                            ${t.transaction_type !== 'opening' ? `
+                                                <button onclick="editTransaction('${t.id}', '${collector.name}')" style="background: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; border: none; cursor: pointer;" title="Edit">✏️</button>
+                                                <button onclick="deleteTransaction('${t.id}', '${collector.name}')" style="background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; border: none; cursor: pointer;" title="Delete">🗑️</button>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="transaction-note">${t.note}</div>
+                                    <div class="transaction-date">${new Date(t.transaction_date).toLocaleDateString('en-IN', { 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric' 
+                                    })}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Modal functions
+        window.openTransactionModal = function(collectorName, type) {
+            currentCollector = collectorName;
+            currentTransactionType = type;
+            
+            const modalTitle = document.getElementById('modalTitle');
+            modalTitle.textContent = type === 'add' ? 
+                `Add Money - ${collectorName}` : 
+                `Subtract Money - ${collectorName}`;
+            
+            document.getElementById('transactionModal').classList.add('active');
+            document.getElementById('amount').focus();
+        };
+
+        window.closeModal = function() {
+            document.getElementById('transactionModal').classList.remove('active');
+            document.getElementById('transactionForm').reset();
+            currentCollector = null;
+            currentTransactionType = null;
+        };
+
+        // Opening Balance Modal functions
+        window.openSetOpeningBalanceModal = function() {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            const monthDisplay = `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+            document.getElementById('openingBalanceMonth').textContent = monthDisplay;
+            document.getElementById('openingBalanceModal').classList.add('active');
+            document.getElementById('sureshOpening').focus();
+        };
+
+        window.closeOpeningBalanceModal = function() {
+            document.getElementById('openingBalanceModal').classList.remove('active');
+            document.getElementById('openingBalanceForm').reset();
+        };
+
+        // Handle opening balance form submission
+        document.getElementById('openingBalanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const sureshOpening = parseFloat(document.getElementById('sureshOpening').value);
+            const edwardOpening = parseFloat(document.getElementById('edwardOpening').value);
+            const samuelOpening = parseFloat(document.getElementById('samuelOpening').value);
+            const irinaOpening = parseFloat(document.getElementById('irinaOpening').value);
+            
+            if (isNaN(sureshOpening) || isNaN(edwardOpening) || isNaN(samuelOpening) || isNaN(irinaOpening)) {
+                alert('Please enter valid amounts');
+                return;
+            }
+
+            const monthKey = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
+            
+            try {
+                // Check if opening balances already exist for this month
+                const transactionsRef = collection(db, 'balance_transactions');
+                const q = query(transactionsRef, 
+                    where('month', '==', monthKey), 
+                    where('transaction_type', '==', 'opening'));
+                const existingSnapshot = await getDocs(q);
+                
+                if (!existingSnapshot.empty) {
+                    if (!confirm('Opening balances already exist for this month. Do you want to replace them?')) {
+                        return;
+                    }
+                    // Delete existing opening balances
+                    const deletePromises = existingSnapshot.docs.map(doc => 
+                        deleteDoc(doc.ref)
+                    );
+                    await Promise.all(deletePromises);
+                }
+
+                // Add new opening balances
+                const transactions = [
+                    {
+                        collector_name: 'Suresh',
+                        amount: sureshOpening
+                    },
+                    {
+                        collector_name: 'Edward',
+                        amount: edwardOpening
+                    },
+                    {
+                        collector_name: 'Samuel',
+                        amount: samuelOpening
+                    },
+                    {
+                        collector_name: 'Irina',
+                        amount: irinaOpening
+                    }
+                ];
+
+                const promises = transactions.map(t => {
+                    const transaction = {
+                        collector_name: t.collector_name,
+                        transaction_type: 'opening',
+                        amount: t.amount,
+                        note: `Opening balance for ${currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+                        transaction_date: `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-01`,
+                        month: monthKey,
+                        created_at: new Date().toISOString()
+                    };
+                    return addDoc(collection(db, 'balance_transactions'), transaction);
+                });
+
+                await Promise.all(promises);
+                
+                alert('✅ Opening balances set successfully!');
+                closeOpeningBalanceModal();
+                loadBalances();
+            } catch (error) {
+                console.error('Error setting opening balances:', error);
+                alert('Error setting opening balances. Please try again.');
+            }
+        });
+
+        // Edit Transaction
+        window.editTransaction = async function(transactionId, collectorName) {
+            if (!confirm('Edit this transaction?')) return;
+            
+            const newAmount = prompt('New amount (₹):');
+            if (!newAmount || isNaN(newAmount)) return;
+            
+            const newNote = prompt('New note:');
+            if (!newNote) return;
+            
+            try {
+                const docRef = doc(db, 'balance_transactions', transactionId);
+                await updateDoc(docRef, {
+                    amount: parseFloat(newAmount),
+                    note: newNote,
+                    updated_at: new Date().toISOString()
+                });
+                alert('✅ Transaction updated!');
+                loadBalances();
+            } catch (error) {
+                console.error('Error updating transaction:', error);
+                alert('Error updating transaction. Please try again.');
+            }
+        };
+
+        // Delete Transaction
+        window.deleteTransaction = async function(transactionId, collectorName) {
+            if (!confirm('⚠️ Delete this transaction? This cannot be undone!')) return;
+            
+            try {
+                const docRef = doc(db, 'balance_transactions', transactionId);
+                await deleteDoc(docRef);
+                alert('✅ Transaction deleted!');
+                loadBalances();
+            } catch (error) {
+                console.error('Error deleting transaction:', error);
+                alert('Error deleting transaction. Please try again.');
+            }
+        };
+
+        // Handle form submission
+        document.getElementById('transactionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const amount = parseFloat(document.getElementById('amount').value);
+            const note = document.getElementById('note').value;
+            
+            if (!amount || !note) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const monthKey = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
+            
+            const transaction = {
+                collector_name: currentCollector,
+                transaction_type: currentTransactionType,
+                amount: currentTransactionType === 'subtract' ? -amount : amount,
+                note: note,
+                transaction_date: new Date().toISOString().split('T')[0],
+                month: monthKey,
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                await addDoc(collection(db, 'balance_transactions'), transaction);
+                alert('Transaction saved successfully!');
+                closeModal();
+                loadBalances();
+            } catch (error) {
+                console.error('Error saving transaction:', error);
+                alert('Error saving transaction. Please try again.');
+            }
+        });
+
+        // Initialize month display
+        updateMonthDisplay();
+    </script>
+</body>
+</html>
