@@ -1,0 +1,2508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hope Association - Loan Management v12</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+            }
+            .no-print { display: none !important; }
+            @page {
+                size: portrait;
+                margin: 0.75in;
+            }
+        }
+        
+        .print-document {
+            background: white;
+            padding: 0;
+            max-width: 8.5in;
+            margin: 0 auto;
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.2;
+            color: #000;
+        }
+        
+        .print-document .title-section {
+            text-align: center;
+            margin-bottom: 10px;
+            margin-top: 0;
+        }
+        
+        .print-document h1 {
+            color: #2E5090;
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 0;
+            padding: 0;
+            display: inline;
+        }
+        
+        .print-document h2 {
+            background-color: #2E5090 !important;
+            color: white !important;
+            font-size: 11pt;
+            font-weight: bold;
+            margin-top: 12px;
+            margin-bottom: 6px;
+            padding: 4px 8px;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+        
+        .print-document .export-date {
+            text-align: center;
+            color: #666666;
+            font-size: 8pt;
+            margin: 2px 0 12px 0;
+        }
+        
+        .print-document table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 4px 0 8px 0;
+            font-size: 10pt;
+        }
+        
+        .print-document table td, 
+        .print-document table th {
+            border: 1px solid #CCCCCC;
+            padding: 4px 6px;
+            text-align: left;
+            vertical-align: top;
+            line-height: 1.15;
+        }
+        
+        .print-document table th {
+            background-color: white !important;
+            color: #000 !important;
+            font-weight: bold;
+            font-size: 10pt;
+            padding: 5px 6px;
+            border: 1px solid #CCCCCC;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        .print-document .label-cell {
+            background-color: #E8F1F8 !important;
+            font-weight: bold;
+            width: 40%;
+            font-size: 10pt;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        .print-document .value-cell {
+            width: 60%;
+            font-size: 10pt;
+        }
+        
+        .print-document .right-align {
+            text-align: right;
+        }
+        
+        .print-document .progress-text {
+            color: #2E8B57;
+            font-weight: bold;
+        }
+        
+        .print-document .page-break {
+            page-break-before: always;
+            margin-top: 0;
+            padding-top: 0;
+        }
+        
+        .print-document p {
+            margin: 2px 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Print Area -->
+    <div id="printArea" class="hidden"></div>
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
+            <p class="text-lg font-semibold">Connecting to database...</p>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="hidden min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-indigo-900">Hope Association</h1>
+                <p class="text-gray-600 mt-2">Loan Management System</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="loginUsername" placeholder="samuel@hope.org" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="loginPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <button id="loginBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden min-h-screen">
+        <nav class="bg-white shadow-md no-print sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <h1 class="text-2xl font-bold text-indigo-900">Hope Association</h1>
+                    </div>
+                    <div class="flex gap-6">
+                        <button id="navLoans" data-nav class="px-4 py-2 hover:text-indigo-600">Loans</button>
+                        <button id="navRequests" data-nav class="px-4 py-2 hover:text-indigo-600">Requests</button>
+                        <button id="navReminders" data-nav class="px-4 py-2 hover:text-indigo-600">Payment Reminders</button>
+                        <button id="navBalance" data-nav class="px-4 py-2 hover:text-indigo-600">Balance</button>
+                        <button id="navSupport" data-nav class="px-4 py-2 hover:text-indigo-600">Support</button>
+                        <button id="navCreate" data-nav class="px-4 py-2 hover:text-indigo-600">Create Loan</button>
+                        <button id="navSettings" data-nav class="px-4 py-2 hover:text-indigo-600">Settings</button>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <div class="font-semibold" id="userName"></div>
+                            <div class="text-sm text-gray-600" id="userRole"></div>
+                        </div>
+                        <button id="logoutBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto p-4 no-print">
+            <!-- Loans View -->
+            <div id="loansView" data-view class="hidden">
+                <div class="bg-white rounded-lg shadow p-4 mb-4">
+                    <h3 class="font-bold mb-3">Search & Filter Loans</h3>
+                    <!-- BUILD 2026-02-12-A -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                        <input type="text" id="searchInput" placeholder="Search by name..." class="px-3 py-1.5 border rounded-lg text-sm">
+                        <select id="filterYear" class="px-3 py-1.5 border rounded-lg text-sm">
+                            <option value="">All Years</option>
+                        </select>
+                        <select id="filterCollector" class="px-3 py-1.5 border rounded-lg text-sm">
+                            <option value="">All Collectors</option>
+                            <option value="Suresh">Suresh</option>
+                            <option value="Edward">Edward</option>
+                            <option value="Samuel">Samuel</option>
+                            <option value="Irina">Irina</option>
+                            <option value="Ivan">Ivan</option>
+                        </select>
+                        <select id="filterLoanGiver" class="px-3 py-1.5 border rounded-lg text-sm">
+                            <option value="">All Loan Givers</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <select id="filterPurpose" class="px-3 py-1.5 border rounded-lg text-sm">
+                            <option value="">All Purposes</option>
+                            <option value="Business">Business</option>
+                            <option value="Building/Construction">Building/Construction</option>
+                            <option value="House Leasing">House Leasing</option>
+                            <option value="Education">Education</option>
+                            <option value="Real Estate">Real Estate</option>
+                            <option value="Debt Clearance">Debt Clearance</option>
+                            <option value="Vehicle">Vehicle</option>
+                            <option value="Medical Treatment">Medical Treatment</option>
+                            <option value="Other Reason">Other Reason</option>
+                        </select>
+                        <select id="filterLoanGiver" class="px-4 py-2 border rounded-lg">
+                            <option value="">All Loan Givers</option>
+                        </select>
+                        <select id="filterCurrency" class="px-3 py-1.5 border rounded-lg text-sm">
+                            <option value="">All Currencies</option>
+                            <option value="INR">INR</option>
+                            <option value="CHF">CHF</option>
+                            <option value="MXN">MXN</option>
+                        </select>
+                        <select id="filterStatus" class="px-3 py-1.5 border rounded-lg text-sm">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-between mt-2">
+                        <button id="clearFilters" class="bg-gray-500 text-white px-3 py-1.5 rounded-lg hover:bg-gray-600 text-sm">Clear Filters</button>
+                        <button id="exportFilteredBtn" class="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 text-sm">Export Filtered Loans (Excel)</button>
+                    </div>
+                </div>
+                <div id="loansContainer"></div>
+            </div>
+
+            <!-- Requests View -->
+            <div id="requestsView" data-view class="hidden">
+                <div class="bg-white rounded-lg shadow p-6 mb-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold">Financial Request Applications</h2>
+                        <button id="newRequestBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 font-semibold">+ New Request</button>
+                    </div>
+                    <p class="text-gray-600 mb-4">Submit loan requests from staff - Mercy Ministry Tamil Nadu</p>
+                    <div class="flex gap-3 mb-4">
+                        <button id="filterAllRequests" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">All</button>
+                        <button id="filterPendingRequests" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Pending</button>
+                        <button id="filterApprovedRequests" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Approved</button>
+                        <button id="filterRejectedRequests" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Rejected</button>
+                    </div>
+                </div>
+                <div id="requestsContainer"></div>
+            </div>
+
+            <!-- Create Request Form View -->
+            <div id="createRequestView" data-view class="hidden">
+                <div class="bg-white rounded-lg shadow max-w-2xl mx-auto p-6">
+                    <h2 class="text-xl font-bold mb-4">New Financial Request</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="requestFullName" placeholder="Full Name *" class="w-full px-4 py-2 border rounded-lg" required>
+                        <input type="text" id="requestMinistryPlace" placeholder="Ministry Place / Team *" class="w-full px-4 py-2 border rounded-lg" required>
+                        <textarea id="requestExplanation" placeholder="Explain the request *" rows="4" class="w-full px-4 py-2 border rounded-lg" required></textarea>
+                        <input type="number" id="requestAmount" placeholder="Amount (₹) *" class="w-full px-4 py-2 border rounded-lg" required>
+                        <input type="number" id="requestMonthlyPayback" placeholder="Monthly Payback (₹) - leave empty if gift" class="w-full px-4 py-2 border rounded-lg">
+                        <textarea id="requestOtherResources" placeholder="Other Resources (optional)" rows="2" class="w-full px-4 py-2 border rounded-lg"></textarea>
+                        <input type="text" id="requestBankAccount" placeholder="Bank Account / UPI *" class="w-full px-4 py-2 border rounded-lg" required>
+                        <div class="flex gap-3">
+                            <button id="submitRequestBtn" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 font-semibold">Submit Request</button>
+                            <button id="cancelRequestBtn" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Reminders View -->
+            <div id="remindersView" data-view class="hidden">
+                <div class="bg-white rounded-lg shadow p-4 mb-4 sticky top-0 z-10">
+                    <h2 class="text-xl font-bold mb-1">Payment Reminders</h2>
+                    <p class="text-gray-600 text-sm mb-3">Loans requiring monthly payment confirmation</p>
+                    <div class="flex gap-3 mb-3 flex-wrap items-center">
+                        <button id="reminderPrevMonth" class="px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm font-semibold">← Prev</button>
+                        <span id="reminderMonthDisplay" class="text-lg font-bold text-indigo-600 min-w-[150px] text-center"></span>
+                        <button id="reminderNextMonth" class="px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm font-semibold">Next →</button>
+                        <span class="border-l border-gray-300 mx-1"></span>
+                        <button id="filterAllLoans" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">All Loans</button>
+                        <button id="filterSureshLoans" class="px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Suresh</button>
+                        <button id="filterEdwardLoans" class="px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Edward</button>
+                        <button id="filterSamuelLoans" class="px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Samuel</button>
+                        <span class="border-l border-gray-300 mx-1"></span>
+                        <button onclick="exportCollectorList('Suresh')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold">📋 Suresh</button>
+                        <button onclick="exportCollectorList('Edward')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold">📋 Edward</button>
+                        <button onclick="exportCollectorList('Samuel')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold">📋 Samuel</button>
+                    </div>
+                    <input type="text" id="reminderSearch" placeholder="Search by name..." class="px-3 py-1.5 border rounded-lg text-sm w-full md:w-64">
+                </div>
+                <div id="remindersContainer"></div>
+            </div>
+
+            <!-- Create Loan View -->
+            <div id="createView" data-view class="hidden">
+                <div class="bg-white rounded-lg shadow max-w-2xl mx-auto p-6">
+                    <h2 class="text-xl font-bold mb-4">Create New Loan</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="borrowerName" placeholder="Borrower Name *" class="w-full px-4 py-2 border rounded-lg" required>
+                        <input type="date" id="loanDate" placeholder="Date *" class="w-full px-4 py-2 border rounded-lg" required>
+                      <select id="loanPurpose" class="w-full px-4 py-2 border rounded-lg" required>
+    <option value="">Select Purpose *</option>
+    <option value="Business">Business</option>
+    <option value="Building/Construction">Building/Construction</option>
+    <option value="House Leasing">House Leasing</option>
+    <option value="Education">Education</option>
+    <option value="Real Estate">Real Estate</option>
+    <option value="Debt Clearance">Debt Clearance</option>
+    <option value="Vehicle">Vehicle</option>
+    <option value="Medical Treatment">Medical Treatment</option>
+    <option value="Other Reason">Other Reason</option>
+</select>
+                        <input type="text" id="loanGiver" placeholder="Loan Giver (optional)" class="w-full px-4 py-2 border rounded-lg">
+                        <select id="loanCollector" class="w-full px-4 py-2 border rounded-lg" required>
+                            <option value="">Select Collector *</option>
+                            <option value="Edward">Edward</option>
+                            <option value="Suresh">Suresh</option>
+                            <option value="Samuel">Samuel</option>
+                            <option value="Irina">Irina</option>
+                            <option value="Ivan">Ivan</option>
+                        </select>
+                        <select id="loanCurrency" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="INR">INR (₹)</option>
+                            <option value="CHF">CHF</option>
+                            <option value="MXN">MXN ($)</option>
+                        </select>
+                        <input type="number" id="loanAmount" placeholder="Amount *" class="w-full px-4 py-2 border rounded-lg" required>
+                        <div class="flex gap-2">
+                            <select id="monthlyPaymentCurrency" class="px-3 py-2 border rounded-lg w-28">
+                                <option value="INR">INR (₹)</option>
+                                <option value="CHF">CHF</option>
+                                <option value="MXN">MXN ($)</option>
+                            </select>
+                            <input type="number" id="monthlyPaymentAmount" placeholder="Monthly Payment (optional)" class="flex-1 px-4 py-2 border rounded-lg">
+                        </div>
+                        <textarea id="loanComments" placeholder="Comments (optional)" rows="3" class="w-full px-4 py-2 border rounded-lg"></textarea>
+                        <button id="createLoanBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">Create Loan</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settingsView" data-view class="hidden">
+                <div class="bg-white rounded-lg shadow max-w-2xl mx-auto p-6 mb-4">
+                    <h2 class="text-xl font-bold mb-4">Data Backup & Restore</h2>
+                    <p class="text-sm text-gray-600 mb-4">Protect your data by creating regular backups</p>
+                    <div class="flex gap-4">
+                        <button onclick="backupAllData()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
+                            💾 Download Backup
+                        </button>
+                        <button onclick="restoreFromBackup()" class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-semibold">
+                            📥 Restore from Backup
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow max-w-2xl mx-auto p-6">
+                    <h2 class="text-xl font-bold mb-4">CHF Exchange Rates by Year</h2>
+                    <p class="text-sm text-gray-600 mb-4">Set average CHF to INR rate per year</p>
+                    <div id="ratesContainer" class="space-y-3 mb-4"></div>
+                    <button id="addRateBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Add Year Rate</button>
+                </div>
+            </div>
+            <!-- Balance View -->
+            <div id="balanceView" data-view class="hidden">
+                <iframe src="balance.html" style="width: 100%; height: calc(100vh - 200px); border: none; background: white; border-radius: 12px;"></iframe>
+            </div>
+
+            <!-- Support View -->
+            <div id="supportView" data-view class="hidden">
+                <iframe src="support.html" style="width: 100%; height: calc(100vh - 200px); border: none; background: white; border-radius: 12px;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBq6u09yrCy_2QZJXpuh-RKWo0_5wXsTag",
+            authDomain: "hope-association-loans.firebaseapp.com",
+            projectId: "hope-association-loans",
+            storageBucket: "hope-association-loans.firebasestorage.app",
+            messagingSenderId: "432884261468",
+            appId: "1:432884261468:web:d92185f8bce4f550c17c99"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Global variables
+        // User role mapping (stored securely in Firestore, not in code)
+        const userRoleMap = {
+            'samuel@hope.org': {role: 'admin', name: 'Samuel', region: 'india'},
+            'ivan@hope.org': {role: 'admin', name: 'Ivan', region: 'all'},
+            'isaac@hope.org': {role: 'admin', name: 'Isaac', region: 'india'},
+            'ida@hope.org': {role: 'admin', name: 'Ida', region: 'india'},
+            'oli@hope.org': {role: 'admin', name: 'Oli', region: 'india'},
+            'suresh@hope.org': {role: 'collector', name: 'Suresh', region: 'india'},
+            'edward@hope.org': {role: 'collector', name: 'Edward', region: 'india'},
+            'irina@hope.org': {role: 'admin', name: 'Irina', region: 'mexico'}
+        };
+        
+        let currentUser = null;
+        let loans = [];
+        let payments = [];
+        let chfRates = {};
+        let requests = [];
+
+        // Hide loading screen when page loads
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadDataFromFirebase();
+            setupEvents();
+            checkLogin();
+            document.getElementById('loadingScreen').classList.add('hidden');
+        });
+
+        // Load data from Firebase
+        async function loadDataFromFirebase() {
+            try {
+                console.log('🔄 Loading data from Firebase...');
+                
+                // Load loans
+                const loansSnapshot = await getDocs(collection(db, 'loans'));
+                loans = loansSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                console.log('✅ Loaded loans:', loans.length);
+
+                // Load payments
+                const paymentsSnapshot = await getDocs(collection(db, 'payments'));
+                payments = paymentsSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                console.log('✅ Loaded payments:', payments.length);
+
+                // Load CHF rates
+                const ratesSnapshot = await getDocs(collection(db, 'chfRates'));
+                chfRates = {};
+                ratesSnapshot.docs.forEach(doc => {
+                    chfRates[doc.data().year] = doc.data().rate;
+                });
+                console.log('✅ Loaded CHF rates:', Object.keys(chfRates).length);
+
+                // Load requests
+                const requestsSnapshot = await getDocs(collection(db, 'requests'));
+                requests = requestsSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                console.log('✅ Loaded requests:', requests.length);
+
+                // Set default rates if none exist
+                if (Object.keys(chfRates).length === 0) {
+                    chfRates = {2024: 110, 2025: 110, 2026: 110};
+                    for (const [year, rate] of Object.entries(chfRates)) {
+                        await addDoc(collection(db, 'chfRates'), {year: parseInt(year), rate});
+                    }
+                }
+
+                // Populate year filter
+                populateYearFilter();
+
+                console.log('✅ Data loaded successfully:', {loans: loans.length, payments: payments.length, rates: Object.keys(chfRates).length, requests: requests.length});
+            } catch (error) {
+                console.error('❌ Error loading data from Firebase:', error);
+                alert('Error connecting to database. Please refresh the page.');
+            }
+        }
+
+        // Real-time listeners
+        function setupRealtimeListeners() {
+            // Listen for loan changes
+            onSnapshot(collection(db, 'loans'), (snapshot) => {
+                loans = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                populateYearFilter();
+                if (document.getElementById('mainApp').classList.contains('hidden') === false) {
+                    renderLoans();
+                }
+            });
+
+            // Listen for payment changes
+            onSnapshot(collection(db, 'payments'), (snapshot) => {
+                payments = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                if (document.getElementById('mainApp').classList.contains('hidden') === false) {
+                    renderLoans();
+                    // Re-render reminders if visible
+                    if (!document.getElementById('remindersView').classList.contains('hidden')) {
+                        renderReminders();
+                    }
+                }
+            });
+
+            // Listen for rate changes
+            onSnapshot(collection(db, 'chfRates'), (snapshot) => {
+                chfRates = {};
+                snapshot.docs.forEach(doc => {
+                    chfRates[doc.data().year] = doc.data().rate;
+                });
+                if (document.getElementById('settingsView').classList.contains('hidden') === false) {
+                    renderSettings();
+                }
+            });
+
+            // Listen for request changes
+            onSnapshot(collection(db, 'requests'), (snapshot) => {
+                requests = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                if (document.getElementById('requestsView').classList.contains('hidden') === false) {
+                    renderRequests('all');
+                }
+            });
+        }
+
+        function checkLogin() {
+            // Listen for auth state changes
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    // User is signed in
+                    const userInfo = userRoleMap[user.email];
+                    if (userInfo) {
+                        currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            role: userInfo.role,
+                            name: userInfo.name,
+                            username: user.email.split('@')[0]
+                        };
+                        await loadDataFromFirebase();
+                        showApp();
+                    } else {
+                        // User exists but not authorized
+                        await signOut(auth);
+                        alert('You are not authorized to access this system');
+                        showLogin();
+                    }
+                } else {
+                    // User is signed out
+                    showLogin();
+                }
+            });
+        }
+
+        function setupEvents() {
+            document.getElementById('loginBtn').onclick = login;
+            document.getElementById('logoutBtn').onclick = logout;
+            document.getElementById('navLoans').onclick = () => switchView('loans');
+            document.getElementById('navRequests').onclick = () => switchView('requests');
+            document.getElementById('navReminders').onclick = () => switchView('reminders');
+            document.getElementById('navBalance').onclick = () => switchView('balance');
+            document.getElementById('navSupport').onclick = () => switchView('support');
+            document.getElementById('navCreate').onclick = () => { setupCreateForm(); switchView('create'); };
+            document.getElementById('navSettings').onclick = () => switchView('settings');
+            document.getElementById('createLoanBtn').onclick = createLoan;
+            document.getElementById('searchInput').oninput = renderLoans;
+            document.getElementById('filterYear').onchange = renderLoans;
+            document.getElementById('filterCollector').onchange = renderLoans;
+            document.getElementById('filterPurpose').onchange = renderLoans;
+            document.getElementById('filterLoanGiver').onchange = renderLoans;
+            document.getElementById('filterCurrency').onchange = renderLoans;
+            document.getElementById('filterStatus').onchange = renderLoans;
+            document.getElementById('clearFilters').onclick = clearFilters;
+            document.getElementById('addRateBtn').onclick = addYearRate;
+            document.getElementById('exportFilteredBtn').onclick = exportFilteredLoans;
+            document.getElementById('filterAllLoans').onclick = () => renderReminders('all');
+            document.getElementById('filterSureshLoans').onclick = () => renderReminders('Suresh');
+            document.getElementById('filterEdwardLoans').onclick = () => renderReminders('Edward');
+            document.getElementById('filterSamuelLoans').onclick = () => renderReminders('Samuel');
+            document.getElementById('reminderPrevMonth').onclick = () => { reminderMonth.setMonth(reminderMonth.getMonth() - 1); renderReminders(); };
+            document.getElementById('reminderNextMonth').onclick = () => { reminderMonth.setMonth(reminderMonth.getMonth() + 1); renderReminders(); };
+            document.getElementById('reminderSearch').addEventListener('input', () => renderReminders());
+            document.getElementById('newRequestBtn').onclick = () => switchView('createRequest');
+            document.getElementById('submitRequestBtn').onclick = submitRequest;
+            document.getElementById('cancelRequestBtn').onclick = () => switchView('requests');
+            document.getElementById('filterAllRequests').onclick = () => renderRequests('all');
+            document.getElementById('filterPendingRequests').onclick = () => renderRequests('pending');
+            document.getElementById('filterApprovedRequests').onclick = () => renderRequests('approved');
+            document.getElementById('filterRejectedRequests').onclick = () => renderRequests('rejected');
+        }
+
+        async function login() {
+            const email = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            // Show loading
+            const loginBtn = document.querySelector('#loginScreen button');
+            const originalText = loginBtn.textContent;
+            loginBtn.textContent = 'Logging in...';
+            loginBtn.disabled = true;
+            
+            try {
+                // Sign in with Firebase Auth
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Get user role from mapping
+                const userInfo = userRoleMap[user.email];
+                if (!userInfo) {
+                    throw new Error('User not authorized');
+                }
+                
+                currentUser = {
+                    uid: user.uid,
+                    email: user.email,
+                    role: userInfo.role,
+                    name: userInfo.name,
+                    username: user.email.split('@')[0]
+                };
+                
+                await loadDataFromFirebase();
+                showApp();
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                let message = 'Invalid email or password';
+                if (error.code === 'auth/user-not-found') {
+                    message = 'No user found with this email';
+                } else if (error.code === 'auth/wrong-password') {
+                    message = 'Incorrect password';
+                } else if (error.code === 'auth/invalid-email') {
+                    message = 'Invalid email format';
+                } else if (error.message === 'User not authorized') {
+                    message = 'You are not authorized to access this system';
+                }
+                alert(message);
+                
+                loginBtn.textContent = originalText;
+                loginBtn.disabled = false;
+            }
+        }
+
+        async function logout() {
+            try {
+                await signOut(auth);
+                currentUser = null;
+                showLogin();
+            } catch (error) {
+                console.error('Logout error:', error);
+                alert('Error logging out');
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        async function showApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userRole').textContent = currentUser.role;
+            
+            if (currentUser.role !== 'admin') {
+                document.getElementById('navCreate').style.display = 'none';
+            }
+            
+            setupRealtimeListeners();
+            switchView('loans');
+
+            // Weekly backup reminder
+            checkBackupReminder();
+        }
+
+        function checkBackupReminder() {
+            const lastBackup = localStorage.getItem('lastBackupReminder');
+            const today = new Date().toDateString();
+            
+            if (lastBackup !== today) {
+                const daysSinceReminder = lastBackup ? Math.floor((new Date() - new Date(lastBackup)) / (1000 * 60 * 60 * 24)) : 999;
+                
+                if (daysSinceReminder >= 7 || !lastBackup) {
+                    setTimeout(() => {
+                        if (confirm('⚠️ BACKUP REMINDER\n\nIt\'s been a week since the last backup reminder!\n\nCreate a backup now to protect your data?\n\n(Go to Settings → Download Backup)')) {
+                            switchView('settings');
+                        }
+                        localStorage.setItem('lastBackupReminder', today);
+                    }, 3000); // Show after 3 seconds
+                }
+            }
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('[data-view]').forEach(el => el.classList.add('hidden'));
+            document.getElementById(view + 'View').classList.remove('hidden');
+            document.querySelectorAll('[data-nav]').forEach(el => el.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600'));
+            
+            const nav = document.getElementById('nav' + view.charAt(0).toUpperCase() + view.slice(1));
+            nav.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
+            
+            if (view === 'loans') renderLoans();
+            if (view === 'requests') renderRequests('all');
+            if (view === 'reminders') renderReminders('all');
+            if (view === 'settings') renderSettings();
+        }
+
+        // Requests Management with Proper Form
+        function submitRequest() {
+            const fullName = document.getElementById('requestFullName').value.trim();
+            const ministryPlace = document.getElementById('requestMinistryPlace').value.trim();
+            const explanation = document.getElementById('requestExplanation').value.trim();
+            const amount = document.getElementById('requestAmount').value;
+            const monthlyPayback = document.getElementById('requestMonthlyPayback').value;
+            const otherResources = document.getElementById('requestOtherResources').value.trim();
+            const bankAccount = document.getElementById('requestBankAccount').value.trim();
+
+            // Validation
+            if (!fullName || !ministryPlace || !explanation || !amount || !bankAccount) {
+                alert('Please fill in all required fields (marked with *)');
+                return;
+            }
+
+            if (isNaN(amount) || parseFloat(amount) <= 0) {
+                alert('Please enter a valid amount!');
+                return;
+            }
+
+            const request = {
+                full_name: fullName,
+                ministry_place: ministryPlace,
+                explanation: explanation,
+                amount: parseFloat(amount),
+                monthly_payback: monthlyPayback ? parseFloat(monthlyPayback) : null,
+                other_resources: otherResources || 'None',
+                bank_account: bankAccount,
+                status: 'pending',
+                submitted_date: new Date().toISOString(),
+                submitted_by: currentUser.username
+            };
+
+            saveRequest(request);
+        }
+
+        async function saveRequest(request) {
+            try {
+                await addDoc(collection(db, 'requests'), request);
+                
+                // Clear form
+                document.getElementById('requestFullName').value = '';
+                document.getElementById('requestMinistryPlace').value = '';
+                document.getElementById('requestExplanation').value = '';
+                document.getElementById('requestAmount').value = '';
+                document.getElementById('requestMonthlyPayback').value = '';
+                document.getElementById('requestOtherResources').value = '';
+                document.getElementById('requestBankAccount').value = '';
+                
+                switchView('requests');
+                renderRequests('all');
+            } catch (error) {
+                console.error('Error saving request:', error);
+                alert('Error saving request. Please try again.');
+            }
+        }
+
+        function renderRequests(statusFilter) {
+            // Update button styles
+            document.getElementById('filterAllRequests').className = statusFilter === 'all' ? 
+                'px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700' : 
+                'px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300';
+            document.getElementById('filterPendingRequests').className = statusFilter === 'pending' ? 
+                'px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700' : 
+                'px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300';
+            document.getElementById('filterApprovedRequests').className = statusFilter === 'approved' ? 
+                'px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700' : 
+                'px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300';
+            document.getElementById('filterRejectedRequests').className = statusFilter === 'rejected' ? 
+                'px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700' : 
+                'px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300';
+
+            let filtered = requests;
+            if (statusFilter !== 'all') {
+                filtered = requests.filter(r => r.status === statusFilter);
+            }
+
+            const c = document.getElementById('requestsContainer');
+            
+            if (filtered.length === 0) {
+                c.innerHTML = '<div class="bg-gray-50 border border-gray-200 p-6 rounded-lg text-center"><p class="text-gray-600">No requests found.</p></div>';
+                return;
+            }
+
+            c.innerHTML = filtered.map(req => {
+                const statusColors = {
+                    pending: 'bg-yellow-100 text-yellow-800',
+                    approved: 'bg-green-100 text-green-800',
+                    rejected: 'bg-red-100 text-red-800'
+                };
+
+                const statusClass = statusColors[req.status] || 'bg-gray-100 text-gray-800';
+
+                return `<div class="bg-white rounded-lg shadow mb-4 border-l-4 ${req.status === 'pending' ? 'border-yellow-400' : req.status === 'approved' ? 'border-green-400' : 'border-red-400'}">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900">${req.full_name || req.name || 'N/A'}</h3>
+                                <p class="text-sm text-gray-500">Submitted: ${new Date(req.submitted_date).toLocaleDateString()} by ${req.submitted_by}</p>
+                            </div>
+                            <span class="${statusClass} px-3 py-1 rounded-full text-sm font-semibold uppercase">${req.status}</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                            ${req.ministry_place ? `<div>
+                                <p class="text-gray-600 font-semibold">Ministry Place / Team:</p>
+                                <p>${req.ministry_place}</p>
+                            </div>` : ''}
+                            <div>
+                                <p class="text-gray-600 font-semibold">Amount Requested:</p>
+                                <p class="font-bold text-indigo-600 text-xl">₹${req.amount.toLocaleString('en-IN')}</p>
+                            </div>
+                            ${req.monthly_payback ? `<div>
+                                <p class="text-gray-600 font-semibold">Monthly Payback:</p>
+                                <p>₹${req.monthly_payback.toLocaleString('en-IN')}</p>
+                            </div>` : ''}
+                            ${req.other_resources ? `<div>
+                                <p class="text-gray-600 font-semibold">Other Resources:</p>
+                                <p>${req.other_resources}</p>
+                            </div>` : ''}
+                            ${req.bank_account ? `<div class="col-span-2">
+                                <p class="text-gray-600 font-semibold">Bank Account / UPI:</p>
+                                <p class="font-mono text-sm">${req.bank_account}</p>
+                            </div>` : ''}
+                        </div>
+
+                        ${req.explanation ? `<div class="mb-4">
+                            <p class="text-gray-600 font-semibold mb-2">Request Explanation:</p>
+                            <p class="text-sm bg-gray-50 p-3 rounded">${req.explanation}</p>
+                        </div>` : ''}
+
+                        ${req.admin_notes ? `<div class="mb-4">
+                            <p class="text-gray-600 font-semibold mb-2">Admin Notes:</p>
+                            <p class="text-sm bg-blue-50 p-3 rounded">${req.admin_notes}</p>
+                        </div>` : ''}
+
+                        ${currentUser.role === 'admin' && req.status === 'pending' ? `
+                        <div class="flex gap-2 mt-4">
+                            <button onclick="approveRequest('${req.id}')" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-semibold">
+                                ✅ Approve
+                            </button>
+                            <button onclick="rejectRequest('${req.id}')" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 font-semibold">
+                                ❌ Reject
+                            </button>
+                        </div>` : ''}
+
+                        ${currentUser.role === 'admin' ? `
+                        <button onclick="deleteRequest('${req.id}')" class="mt-2 text-sm text-red-600 hover:text-red-800">🗑️ Delete Request</button>
+                        ` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function approveRequest(requestId) {
+            const request = requests.find(r => r.id === requestId);
+            if (!request) return;
+
+            const notes = prompt('Admin notes (optional):');
+
+            try {
+                await updateDoc(doc(db, 'requests', requestId), {
+                    status: 'approved',
+                    admin_notes: notes || '',
+                    approved_date: new Date().toISOString(),
+                    approved_by: currentUser.username
+                });
+
+                renderRequests('all');
+            } catch (error) {
+                console.error('Error approving request:', error);
+                alert('Error approving request. Please try again.');
+            }
+        }
+
+        async function rejectRequest(requestId) {
+            const reason = prompt('Reason for rejection (optional):');
+            if (reason === null) return;
+
+            try {
+                await updateDoc(doc(db, 'requests', requestId), {
+                    status: 'rejected',
+                    admin_notes: reason || 'No reason provided',
+                    rejected_date: new Date().toISOString(),
+                    rejected_by: currentUser.username
+                });
+                renderRequests('all');
+            } catch (error) {
+                console.error('Error rejecting request:', error);
+                alert('Error rejecting request. Please try again.');
+            }
+        }
+
+        async function deleteRequest(requestId) {
+            if (!confirm('Delete this request permanently?')) return;
+
+            try {
+                await deleteDoc(doc(db, 'requests', requestId));
+                renderRequests('all');
+            } catch (error) {
+                console.error('Error deleting request:', error);
+                alert('Error deleting request. Please try again.');
+            }
+        }
+
+        // Setup create form based on user region
+        function setupCreateForm() {
+            const collectorDropdown = document.getElementById('loanCollector');
+            const currencyDropdown = document.getElementById('loanCurrency');
+            const mpCurrencyDropdown = document.getElementById('monthlyPaymentCurrency');
+            
+            if (currentUser.region === 'mexico') {
+                collectorDropdown.innerHTML = '<option value="Irina" selected>Irina</option>';
+                collectorDropdown.disabled = true;
+                currencyDropdown.innerHTML = '<option value="MXN" selected>MXN ($)</option>';
+                currencyDropdown.disabled = true;
+                mpCurrencyDropdown.innerHTML = '<option value="MXN" selected>MXN ($)</option>';
+            } else if (currentUser.region === 'india') {
+                collectorDropdown.innerHTML = `
+                    <option value="">Select Collector *</option>
+                    <option value="Edward">Edward</option>
+                    <option value="Suresh">Suresh</option>
+                    <option value="Samuel">Samuel</option>
+                `;
+                collectorDropdown.disabled = false;
+                currencyDropdown.innerHTML = `
+                    <option value="INR">INR (₹)</option>
+                    <option value="CHF">CHF</option>
+                `;
+                currencyDropdown.disabled = false;
+                mpCurrencyDropdown.innerHTML = `
+                    <option value="INR">INR (₹)</option>
+                    <option value="CHF">CHF</option>
+                `;
+            } else {
+                // Default / Ivan (region='all'): All collectors, all currencies
+                collectorDropdown.innerHTML = `
+                    <option value="">Select Collector *</option>
+                    <option value="Edward">Edward</option>
+                    <option value="Suresh">Suresh</option>
+                    <option value="Samuel">Samuel</option>
+                    <option value="Irina">Irina</option>
+                    <option value="Ivan">Ivan</option>
+                `;
+                collectorDropdown.disabled = false;
+                currencyDropdown.innerHTML = `
+                    <option value="INR">INR (₹)</option>
+                    <option value="CHF">CHF</option>
+                    <option value="MXN">MXN ($)</option>
+                `;
+                currencyDropdown.disabled = false;
+                mpCurrencyDropdown.innerHTML = `
+                    <option value="INR">INR (₹)</option>
+                    <option value="CHF">CHF</option>
+                    <option value="MXN">MXN ($)</option>
+                `;
+            }
+            
+            // Sync monthly payment currency with loan currency
+            currencyDropdown.addEventListener('change', () => {
+                mpCurrencyDropdown.value = currencyDropdown.value;
+            });
+        }
+
+        async function createLoan() {
+            const loan = {
+                borrower_name: document.getElementById('borrowerName').value,
+                date: document.getElementById('loanDate').value,
+                purpose: document.getElementById('loanPurpose').value,
+                loan_giver: document.getElementById('loanGiver').value,
+                collector: document.getElementById('loanCollector').value,
+                currency: document.getElementById('loanCurrency').value,
+                amount: parseFloat(document.getElementById('loanAmount').value),
+                monthly_payment: parseFloat(document.getElementById('monthlyPaymentAmount').value) || 0,
+                monthly_payment_currency: document.getElementById('monthlyPaymentCurrency').value,
+                months: document.getElementById('monthlyPaymentAmount').value ? Math.ceil(parseFloat(document.getElementById('loanAmount').value) / parseFloat(document.getElementById('monthlyPaymentAmount').value)) : 0,
+                payment_type: document.getElementById('monthlyPaymentAmount').value ? 'regular' : 'none',
+                comments: document.getElementById('loanComments').value,
+                created_by: currentUser.username,
+                created_at: new Date().toISOString()
+            };
+
+            if (!loan.borrower_name || !loan.date || !loan.purpose || !loan.amount || !loan.collector) {
+                console.log('Validation failed:', loan);
+                alert('Please fill all required fields (marked with *)');
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, 'loans'), loan);
+                
+                // Clear form
+                document.getElementById('borrowerName').value = '';
+                document.getElementById('loanDate').value = '';
+                document.getElementById('loanPurpose').value = '';
+                document.getElementById('loanGiver').value = '';
+                document.getElementById('loanCollector').value = '';
+                document.getElementById('loanAmount').value = '';
+                document.getElementById('monthlyPaymentAmount').value = '';
+                document.getElementById('monthlyPaymentCurrency').value = 'INR';
+                document.getElementById('loanComments').value = '';
+                
+                switchView('loans');
+            } catch (error) {
+                console.error('Error creating loan:', error);
+                alert('Error creating loan. Please try again.');
+            }
+        }
+
+        async function recordPayment(loanId) {
+            const loan = loans.find(l => l.id === loanId);
+            if (!loan) return;
+
+            const amt = prompt('Payment amount:');
+            if (!amt || isNaN(amt)) return;
+            
+            const currency = prompt('Payment currency (INR, CHF, or MXN):', 'INR');
+            if (!currency) return;
+            
+            const payDate = prompt('Payment date (YYYY-MM-DD) - leave empty for today:');
+            const paymentDate = payDate || new Date().toISOString().split('T')[0];
+            
+            // Convert to INR if payment is in different currency than loan
+            let amountInINR = parseFloat(amt);
+            
+            if (currency.toUpperCase() === 'CHF' && loan.currency !== 'CHF') {
+                // CHF payment for INR/MXN loan - convert to INR
+                const rate = getChfRate(paymentDate);
+                amountInINR = parseFloat(amt) * rate;
+                if (!confirm(`CHF ${amt} = ₹${amountInINR.toLocaleString('en-IN')} (Rate: ₹${rate})\n\nRecord this payment?`)) {
+                    return;
+                }
+            } else if (currency.toUpperCase() === 'CHF' && loan.currency === 'CHF') {
+                // CHF payment for CHF loan - still convert to INR for storage
+                const rate = getChfRate(paymentDate);
+                amountInINR = parseFloat(amt) * rate;
+                if (!confirm(`CHF ${amt} (₹${amountInINR.toLocaleString('en-IN')} at rate ₹${rate})\n\nRecord this payment?`)) {
+                    return;
+                }
+            } else if (currency.toUpperCase() === 'MXN' && loan.currency !== 'MXN') {
+                // For now, we don't have MXN rates - you can add this later
+                alert('MXN conversion not yet implemented. Please enter payment in INR.');
+                return;
+            } else if (currency.toUpperCase() === 'INR' && loan.currency === 'CHF') {
+                // INR payment for CHF loan - convert INR to CHF equivalent
+                const rate = getChfRate(paymentDate);
+                amountInINR = parseFloat(amt); // Store as INR
+                if (!confirm(`₹${amt} = CHF ${(parseFloat(amt) / rate).toFixed(2)} (Rate: ₹${rate})\n\nRecord this payment?`)) {
+                    return;
+                }
+            }
+            
+            const payment = {
+                loan_id: loanId,
+                amount: amountInINR,
+                original_amount: parseFloat(amt),
+                payment_currency: currency.toUpperCase(),
+                date: paymentDate,
+                recorded_at: new Date().toISOString()
+            };
+
+            console.log('💰 Recording payment:', payment);
+            console.log('Payment currency:', payment.payment_currency);
+            console.log('Original amount:', payment.original_amount);
+            console.log('Amount in INR:', payment.amount);
+
+            try {
+                await addDoc(collection(db, 'payments'), payment);
+                await loadDataFromFirebase();
+                renderLoans();
+                renderReminders();
+            } catch (error) {
+                console.error('Error recording payment:', error);
+                alert('Error recording payment. Please try again.');
+            }
+        }
+
+        function getChfRate(dateStr) {
+            const year = new Date(dateStr).getFullYear();
+            return chfRates[year] || 110;
+        }
+
+        async function addYearRate() {
+            const year = prompt('Enter year (e.g., 2024):');
+            if (!year || isNaN(year)) return;
+            
+            const rate = prompt('Enter CHF to INR rate for ' + year + ':');
+            if (!rate || isNaN(rate)) return;
+
+            try {
+                await addDoc(collection(db, 'chfRates'), {
+                    year: parseInt(year),
+                    rate: parseFloat(rate)
+                });
+            } catch (error) {
+                console.error('Error adding rate:', error);
+                alert('Error adding rate. Please try again.');
+            }
+        }
+
+        async function deleteYearRate(year, docId) {
+            if (confirm('Delete rate for ' + year + '?')) {
+                try {
+                    const ratesDocs = await getDocs(collection(db, 'chfRates'));
+                    const docToDelete = ratesDocs.docs.find(doc => doc.data().year === year);
+                    if (docToDelete) {
+                        await deleteDoc(doc(db, 'chfRates', docToDelete.id));
+                    }
+                } catch (error) {
+                    console.error('Error deleting rate:', error);
+                    alert('Error deleting rate. Please try again.');
+                }
+            }
+        }
+
+        function renderSettings() {
+            const container = document.getElementById('ratesContainer');
+            const sortedYears = Object.keys(chfRates).sort((a, b) => b - a);
+            
+            container.innerHTML = sortedYears.map(year => 
+                `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded">
+                    <div class="flex-1"><strong>${year}:</strong> 1 CHF = ₹${chfRates[year]}</div>
+                    <button onclick="deleteYearRate(${year})" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+                </div>`
+            ).join('');
+        }
+
+        function getStats(loan) {
+            const lp = payments.filter(p => p.loan_id === loan.id);
+            const paid = lp.reduce((s, p) => s + p.amount, 0);
+            const rate = getChfRate(loan.date);
+            const loanAmount = loan.currency === 'INR' ? loan.amount : loan.amount * rate;
+            const remaining = loanAmount - paid;
+            const progress = (paid / loanAmount) * 100;
+            
+            return {paid, remaining, progress, count: lp.length};
+        }
+
+        function populateYearFilter() {
+            const years = new Set();
+            loans.forEach(l => {
+                const year = new Date(l.date).getFullYear();
+                years.add(year);
+            });
+            
+            const yearFilter = document.getElementById('filterYear');
+            yearFilter.innerHTML = '<option value="">All Years</option>';
+            Array.from(years).sort((a, b) => b - a).forEach(year => {
+                yearFilter.innerHTML += `<option value="${year}">${year}</option>`;
+            });
+            
+            // Populate Loan Giver filter (case-insensitive dedup, custom sort)
+            const giverMap = {};
+            loans.forEach(l => {
+                if (l.loan_giver && l.loan_giver.trim()) {
+                    const key = l.loan_giver.trim().toLowerCase();
+                    if (!giverMap[key]) {
+                        giverMap[key] = key.replace(/\b\w/g, c => c.toUpperCase());
+                    }
+                }
+            });
+            const giverFilter = document.getElementById('filterLoanGiver');
+            giverFilter.innerHTML = '<option value="">All Loan Givers</option>';
+            const priorityOrder = ['hope', 'seeds', 'alive ministries'];
+            const keys = Object.keys(giverMap);
+            const priorityKeys = [];
+            priorityOrder.forEach(p => {
+                if (keys.includes(p)) priorityKeys.push(p);
+            });
+            const restKeys = keys.filter(k => !priorityKeys.includes(k)).sort();
+            const sortedKeys = [...priorityKeys, ...restKeys];
+            console.log('Loan Giver keys:', sortedKeys);
+            sortedKeys.forEach(key => {
+                giverFilter.innerHTML += `<option value="${key}">${giverMap[key]}</option>`;
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterYear').value = '';
+            document.getElementById('filterCollector').value = '';
+            document.getElementById('filterPurpose').value = '';
+            document.getElementById('filterLoanGiver').value = '';
+            document.getElementById('filterCurrency').value = '';
+            document.getElementById('filterStatus').value = '';
+            renderLoans();
+        }
+
+        function renderLoans() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filterYear = document.getElementById('filterYear').value;
+            const filterCollector = document.getElementById('filterCollector').value;
+            const filterPurpose = document.getElementById('filterPurpose').value;
+            const filterCurrency = document.getElementById('filterCurrency').value;
+            const filterLoanGiver = document.getElementById('filterLoanGiver').value;
+            const filterStatus = document.getElementById('filterStatus').value;
+
+            let filtered = loans.filter(l => {
+                // Filter by region based on collector
+                if (currentUser.region === 'india') {
+                    if (l.collector !== 'Edward' && l.collector !== 'Suresh' && l.collector !== 'Samuel') return false;
+                } else if (currentUser.region === 'mexico') {
+                    if (l.collector !== 'Irina') return false;
+                }
+                
+                if (searchTerm && !l.borrower_name.toLowerCase().includes(searchTerm)) return false;
+                if (filterYear && new Date(l.date).getFullYear().toString() !== filterYear) return false;
+                if (filterCollector && l.collector !== filterCollector) return false;
+                if (filterPurpose && l.purpose !== filterPurpose) return false;
+                if (filterLoanGiver && (l.loan_giver || '').trim().toLowerCase() !== filterLoanGiver) return false;
+                if (filterCurrency && l.currency !== filterCurrency) return false;
+                
+                // Filter by status
+                if (filterStatus) {
+                    const stats = getStats(l);
+                    if (filterStatus === 'active' && stats.remaining <= 0) return false;
+                    if (filterStatus === 'completed' && stats.remaining > 0) return false;
+                }
+                
+                return true;
+            });
+
+            const groups = {};
+            filtered.forEach(l => {
+                if (!groups[l.borrower_name]) groups[l.borrower_name] = [];
+                groups[l.borrower_name].push(l);
+            });
+
+            const c = document.getElementById('loansContainer');
+            c.innerHTML = Object.keys(groups).sort().map(name => {
+                const bLoans = groups[name];
+                let totalBorrowed = 0, totalPaid = 0;
+                let totalBorrowedNative = 0, totalPaidNative = 0;
+                let hasNonINR = false;
+                let nativeCurrency = '';
+                
+                bLoans.forEach(l => {
+                    const s = getStats(l);
+                    const rate = getChfRate(l.date);
+                    // Always calculate INR totals
+                    totalBorrowed += l.currency === 'INR' ? l.amount : l.amount * rate;
+                    totalPaid += s.paid;
+                    // Also track native currency totals
+                    if (l.currency !== 'INR') {
+                        hasNonINR = true;
+                        nativeCurrency = l.currency;
+                        totalBorrowedNative += l.amount;
+                        const lp = payments.filter(p => p.loan_id === l.id);
+                        lp.forEach(p => {
+                            if (p.original_amount && p.payment_currency === l.currency) {
+                                totalPaidNative += p.original_amount;
+                            } else {
+                                const pRate = getChfRate(p.date || l.date);
+                                totalPaidNative += pRate > 0 ? p.amount / pRate : 0;
+                            }
+                        });
+                    }
+                });
+
+                const prog = (totalPaid / totalBorrowed) * 100;
+                let loansHtml = '';
+
+                bLoans.forEach((l, i) => {
+                    const s = getStats(l);
+                    const loanPayments = payments.filter(p => p.loan_id === l.id);
+                    let paymentHistory = '';
+                    
+                    if (loanPayments.length > 0) {
+                        paymentHistory = '<div class="mt-2 text-xs bg-gray-100 p-2 rounded"><strong>Payment History:</strong><br>';
+                        loanPayments.forEach(p => {
+                            console.log('💵 Displaying payment:', p);
+                            console.log('Has payment_currency?', p.payment_currency);
+                            console.log('Has original_amount?', p.original_amount);
+                            
+                            const paymentType = p.amount === 0 ? ' (No Payment - ' + (p.note || 'No reason') + ')' : '';
+                            
+                            // Show payment in original currency if available
+                            let paymentDisplay = '';
+                            if (p.payment_currency && p.original_amount && p.payment_currency !== 'INR') {
+                                // Show original currency and INR equivalent
+                                const currencySymbol = p.payment_currency === 'CHF' ? 'CHF' : (p.payment_currency === 'MXN' ? '$' : '₹');
+                                paymentDisplay = currencySymbol + ' ' + p.original_amount.toLocaleString('en-IN') + ' (₹' + p.amount.toLocaleString('en-IN') + ')';
+                                console.log('✅ Showing with currency:', paymentDisplay);
+                            } else {
+                                // Show only INR
+                                paymentDisplay = '₹' + p.amount.toLocaleString('en-IN');
+                                console.log('⚠️ Showing INR only:', paymentDisplay);
+                            }
+                            
+                            paymentHistory += '<div class="flex justify-between items-center mb-1 p-1 hover:bg-gray-200 rounded">';
+                            paymentHistory += '<span>' + p.date + ': ' + paymentDisplay + paymentType + '</span>';
+                            paymentHistory += '<span>';
+                            paymentHistory += '<button onclick="editPayment(\'' + p.id + '\', \'' + l.id + '\')" class="text-yellow-600 hover:text-yellow-800 mr-2" title="Edit">✏️</button>';
+                            paymentHistory += '<button onclick="deletePayment(\'' + p.id + '\', \'' + l.id + '\')" class="text-red-600 hover:text-red-800" title="Delete">🗑️</button>';
+                            paymentHistory += '</span></div>';
+                        });
+                        paymentHistory += '</div>';
+                    }
+
+                    const rate = getChfRate(l.date);
+                    
+                    // Determine display currency: if loan currency matches monthly payment currency, show in that currency
+                    const mpCur = l.monthly_payment_currency || 'INR';
+                    const showInNative = (l.currency !== 'INR' && l.currency === mpCur);
+                    const curSymbol = l.currency === 'CHF' ? 'CHF ' : l.currency === 'MXN' ? 'MXN $' : '₹';
+                    
+                    // For native currency display, sum original_amount from payments where available
+                    let nativePaid = 0;
+                    if (showInNative) {
+                        const lp = payments.filter(p => p.loan_id === l.id);
+                        lp.forEach(p => {
+                            if (p.original_amount && p.payment_currency === l.currency) {
+                                nativePaid += p.original_amount;
+                            } else {
+                                // Fallback: convert INR back using the rate at payment time
+                                const pRate = getChfRate(p.date || l.date);
+                                nativePaid += pRate > 0 ? p.amount / pRate : 0;
+                            }
+                        });
+                    }
+                    
+                    // Calculate months elapsed and expected balance
+                    const loanStartDate = new Date(l.date);
+                    const today = new Date();
+                    const monthsElapsed = Math.max(0, Math.floor((today - loanStartDate) / (1000 * 60 * 60 * 24 * 30.44)));
+                    const expectedPaidNative = Math.min(monthsElapsed * (parseFloat(l.monthly_payment) || 0), l.amount);
+                    const expectedBalanceNative = Math.max(0, l.amount - expectedPaidNative);
+                    
+                    // INR versions for non-native display
+                    const loanAmountINR = l.currency === 'INR' ? l.amount : l.amount * rate;
+                    const expectedPaidINR = Math.min(monthsElapsed * (parseFloat(l.monthly_payment) || 0) * (l.currency === 'INR' ? 1 : rate), loanAmountINR);
+                    const expectedBalanceINR = Math.max(0, loanAmountINR - expectedPaidINR);
+                    
+                    let displayAmount, displayPaid, displayRemaining, displayExpBal;
+                    if (showInNative) {
+                        const nativeRemaining = l.amount - nativePaid;
+                        displayAmount = curSymbol + l.amount.toLocaleString();
+                        displayPaid = curSymbol + Math.round(nativePaid).toLocaleString();
+                        displayRemaining = curSymbol + Math.round(nativeRemaining).toLocaleString();
+                        displayExpBal = curSymbol + Math.round(expectedBalanceNative).toLocaleString();
+                    } else if (l.currency !== 'INR') {
+                        // Loan in CHF/MXN but repayment in INR: show both
+                        displayAmount = curSymbol + l.amount.toLocaleString() + ' (₹' + loanAmountINR.toLocaleString('en-IN') + ')';
+                        displayPaid = '₹' + s.paid.toLocaleString('en-IN') + ' (' + curSymbol + Math.round(s.paid / rate).toLocaleString() + ')';
+                        displayRemaining = '₹' + s.remaining.toLocaleString('en-IN') + ' (' + curSymbol + Math.round(s.remaining / rate).toLocaleString() + ')';
+                        displayExpBal = '₹' + expectedBalanceINR.toLocaleString('en-IN');
+                    } else {
+                        displayAmount = '₹' + l.amount.toLocaleString('en-IN');
+                        displayPaid = '₹' + s.paid.toLocaleString('en-IN');
+                        displayRemaining = '₹' + s.remaining.toLocaleString('en-IN');
+                        displayExpBal = '₹' + expectedBalanceINR.toLocaleString('en-IN');
+                    }
+                    
+                    const commentsHtml = l.comments ? '<p class="text-sm text-gray-600 italic mt-1">Comments: ' + l.comments + '</p>' : '';
+                    const collectorInfo = l.collector ? '<p class="text-sm"><strong>Collector:</strong> ' + l.collector + '</p>' : '';
+                    
+                    // Calculate expected duration
+                    const avgMonthlyPaid = monthsElapsed > 0 ? s.paid / monthsElapsed : 0;
+                    const expectedDuration = avgMonthlyPaid > 0 ? Math.ceil(loanAmountINR / avgMonthlyPaid) : l.months;
+                    
+                    // Status indicator - compare in native or INR consistently
+                    let isOnTrack;
+                    if (showInNative) {
+                        isOnTrack = (l.amount - nativePaid) <= expectedBalanceNative;
+                    } else {
+                        isOnTrack = s.remaining <= expectedBalanceINR;
+                    }
+                    const statusColor = isOnTrack ? 'text-green-600' : 'text-red-600';
+                    const statusText = isOnTrack ? '✓ On Track' : '⚠ Behind Schedule';
+
+                    loansHtml += '<div class="bg-gray-50 p-3 rounded border-l-4 border-indigo-500">';
+                    loansHtml += '<strong>' + l.purpose + '</strong>';
+                    loansHtml += '<p class="text-sm"><strong>Loan Giver:</strong> ' + (l.loan_giver || 'N/A') + '</p>';
+                    loansHtml += collectorInfo;
+                    const mpCurSymbol = mpCur === 'CHF' ? 'CHF ' : mpCur === 'MXN' ? 'MXN $' : '₹';
+                    const monthlyDisplay = l.monthly_payment > 0 ? mpCurSymbol + l.monthly_payment.toLocaleString('en-IN') : 'No monthly payment';
+                    const durationDisplay = l.months > 0 ? l.months + ' months' : 'N/A';
+                    loansHtml += '<p class="text-sm">Amount: ' + displayAmount + ' | Monthly: ' + monthlyDisplay + ' | Date: ' + l.date + ' | Duration: ' + durationDisplay + ' | Paid: ' + displayPaid + ' | Remaining: ' + displayRemaining + '</p>';
+                    loansHtml += '<p class="text-sm mt-1"><strong>Progress:</strong> Months Elapsed: ' + monthsElapsed + ' | Expected Balance: ' + displayExpBal + ' | Expected Duration: ' + expectedDuration + ' months | <span class="font-semibold ' + statusColor + '">' + statusText + '</span></p>';
+                    loansHtml += commentsHtml;
+                    loansHtml += paymentHistory;
+                    loansHtml += '<div class="mt-2 flex gap-2">';
+                    loansHtml += '<button onclick="recordPayment(\'' + l.id + '\')" class="bg-indigo-600 text-white px-4 py-1 rounded text-sm hover:bg-indigo-700">Record Payment</button>';
+                    loansHtml += '<button onclick="editLoan(\'' + l.id + '\')" class="bg-yellow-600 text-white px-4 py-1 rounded text-sm hover:bg-yellow-700">✏️ Edit</button>';
+                    if (currentUser.role === 'admin') {
+                        loansHtml += '<button onclick="deleteLoan(\'' + l.id + '\')" class="bg-red-600 text-white px-4 py-1 rounded text-sm hover:bg-red-700">🗑️ Delete</button>';
+                    }
+                    loansHtml += '</div>';
+                    loansHtml += '</div>';
+                });
+
+                const escapedName = name.replace(/'/g, "\\'");
+                return `<div class="bg-white rounded-lg shadow mb-4">
+                    <div class="bg-indigo-600 text-white p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h2 class="text-xl font-bold">${name}</h2>
+                                <p class="text-sm">${prog.toFixed(1)}% paid</p>
+                                <p>Borrowed: ${hasNonINR ? nativeCurrency + ' ' + totalBorrowedNative.toLocaleString() + ' / ' : ''}₹${totalBorrowed.toLocaleString('en-IN')} | Paid: ${hasNonINR ? nativeCurrency + ' ' + Math.round(totalPaidNative).toLocaleString() + ' / ' : ''}₹${totalPaid.toLocaleString('en-IN')}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="generatePrintDocument('${escapedName}')" class="bg-white text-indigo-600 px-3 py-1 rounded text-sm hover:bg-indigo-50 font-semibold">📄 Print/PDF</button>
+                                <button onclick="exportBorrowerToExcel('${escapedName}')" class="bg-white text-indigo-600 px-3 py-1 rounded text-sm hover:bg-indigo-50 font-semibold">📊 CSV</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 space-y-2">${loansHtml}</div>
+                </div>`;
+            }).join('');
+        }
+
+        // Payment Reminders System
+        // Reminder month state
+        let reminderMonth = new Date();
+        reminderMonth.setDate(1); // normalize to 1st
+        let reminderCollectorFilter = 'all';
+
+        function updateReminderMonthDisplay() {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('reminderMonthDisplay').textContent = 
+                monthNames[reminderMonth.getMonth()] + ' ' + reminderMonth.getFullYear();
+        }
+
+        function renderReminders(collectorFilter) {
+            if (typeof collectorFilter === 'string') reminderCollectorFilter = collectorFilter;
+            const checkMonth = reminderMonth.getMonth();
+            const checkYear = reminderMonth.getFullYear();
+
+            updateReminderMonthDisplay();
+
+            // Update filter button styles
+            document.getElementById('filterAllLoans').className = reminderCollectorFilter === 'all' ? 
+                'px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm' : 
+                'px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm';
+            document.getElementById('filterSureshLoans').className = reminderCollectorFilter === 'Suresh' ? 
+                'px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm' : 
+                'px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm';
+            document.getElementById('filterEdwardLoans').className = reminderCollectorFilter === 'Edward' ? 
+                'px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm' : 
+                'px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm';
+            document.getElementById('filterSamuelLoans').className = reminderCollectorFilter === 'Samuel' ? 
+                'px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm' : 
+                'px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm';
+
+            // Search filter
+            const reminderSearchTerm = (document.getElementById('reminderSearch')?.value || '').toLowerCase().trim();
+            console.log('🔍 Reminder search:', reminderSearchTerm, '| Collector:', reminderCollectorFilter);
+
+            // Filter active loans
+            let activeLoans = loans.filter(l => {
+                const stats = getStats(l);
+                return stats.remaining > 0; // Only active loans
+            });
+
+            // Filter by region
+            if (currentUser.region === 'india') {
+                activeLoans = activeLoans.filter(l => l.collector === 'Edward' || l.collector === 'Suresh' || l.collector === 'Samuel');
+            } else if (currentUser.region === 'mexico') {
+                activeLoans = activeLoans.filter(l => l.collector === 'Irina');
+            }
+
+            // Filter by collector
+            if (reminderCollectorFilter !== 'all') {
+                activeLoans = activeLoans.filter(l => l.collector === reminderCollectorFilter);
+            }
+
+            // Filter by search
+            if (reminderSearchTerm) {
+                activeLoans = activeLoans.filter(l => l.borrower_name.toLowerCase().includes(reminderSearchTerm));
+            }
+
+            if (activeLoans.length === 0) {
+                document.getElementById('remindersContainer').innerHTML = 
+                    '<div class="bg-green-50 border-l-4 border-green-400 p-4"><p class="text-green-800">✅ No active loans requiring attention!</p></div>';
+                return;
+            }
+
+            // Check which loans need payment confirmation for the selected month
+            const loansNeedingAttention = activeLoans.filter(loan => {
+                const loanPayments = payments.filter(p => p.loan_id === loan.id);
+                
+                // Check if there's a payment recorded in the selected month
+                const hasPaymentThisMonth = loanPayments.some(p => {
+                    const paymentDate = new Date(p.date);
+                    return paymentDate.getMonth() === checkMonth && paymentDate.getFullYear() === checkYear;
+                });
+
+                return !hasPaymentThisMonth; // Needs attention if no payment this month
+            });
+
+            // Sort alphabetically by name (ignore number prefix like "124 - ")
+            loansNeedingAttention.sort((a, b) => {
+                const nameA = a.borrower_name.replace(/^\d+\s*-\s*/, '');
+                const nameB = b.borrower_name.replace(/^\d+\s*-\s*/, '');
+                return nameA.localeCompare(nameB);
+            });
+
+            const c = document.getElementById('remindersContainer');
+            
+            if (loansNeedingAttention.length === 0) {
+                c.innerHTML = '<div class="bg-green-50 border-l-4 border-green-400 p-4"><p class="text-green-800">✅ All loans have been confirmed for this month!</p></div>';
+                return;
+            }
+
+            c.innerHTML = loansNeedingAttention.map(loan => {
+                const stats = getStats(loan);
+                const rate = getChfRate(loan.date);
+                const amountInINR = loan.currency === 'INR' ? loan.amount : loan.amount * rate;
+
+                return `<div class="bg-white rounded-lg shadow mb-4 border-l-4 border-yellow-400">
+                    <div class="p-4">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900">${loan.borrower_name}</h3>
+                                <p class="text-sm text-gray-600">${loan.purpose} - Collector: ${loan.collector || 'Not assigned'}</p>
+                            </div>
+                            <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">Needs Attention</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                            <div>
+                                <p class="text-gray-600">Loan Amount:</p>
+                                <p class="font-semibold">₹${amountInINR.toLocaleString('en-IN')}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">Monthly Payment:</p>
+                                <p class="font-semibold">${(loan.monthly_payment_currency === 'CHF' ? 'CHF ' : loan.monthly_payment_currency === 'MXN' ? 'MXN $' : '₹')}${loan.monthly_payment.toLocaleString('en-IN')}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">Total Paid:</p>
+                                <p class="font-semibold text-green-600">₹${stats.paid.toLocaleString('en-IN')}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">Remaining:</p>
+                                <p class="font-semibold text-orange-600">₹${stats.remaining.toLocaleString('en-IN')}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="recordPayment('${loan.id}')" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-semibold">
+                                ✅ Record Payment
+                            </button>
+                            <button onclick="recordMissedPayment('${loan.id}')" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 font-semibold">
+                                ❌ No Payment
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function recordMissedPayment(loanId) {
+            // Ask for date first
+            const checkMonth = reminderMonth.getMonth();
+            const checkYear = reminderMonth.getFullYear();
+            const defaultDate = checkYear + '-' + String(checkMonth + 1).padStart(2, '0') + '-15';
+            const payDate = prompt('Date for this record (YYYY-MM-DD):', defaultDate);
+            if (payDate === null) return;
+            const paymentDate = payDate.trim() || defaultDate;
+
+            let reason = '';
+            while (!reason || reason.trim().length < 20) {
+                reason = prompt('⚠️ MANDATORY: Reason for no payment\n(Minimum 20 characters required)');
+                
+                if (reason === null) {
+                    if (!confirm('Reason is mandatory! Are you sure you want to cancel?')) {
+                        reason = '';
+                    } else {
+                        return;
+                    }
+                } else if (!reason || reason.trim().length < 20) {
+                    alert('❌ Reason must be at least 20 characters!\n\nYou entered: ' + (reason ? reason.trim().length : 0) + ' characters.\nStill need: ' + (20 - (reason ? reason.trim().length : 0)) + ' more characters.');
+                    reason = '';
+                }
+            }
+            
+            const payment = {
+                loan_id: loanId,
+                amount: 0,
+                date: paymentDate,
+                note: reason.trim(),
+                recorded_at: new Date().toISOString()
+            };
+
+            try {
+                await addDoc(collection(db, 'payments'), payment);
+                await loadDataFromFirebase();
+                renderReminders(); // Refresh the view
+            } catch (error) {
+                console.error('Error recording missed payment:', error);
+                alert('Error recording. Please try again.');
+            }
+        }
+
+        async function editPayment(paymentId, loanId) {
+            const payment = payments.find(p => p.id === paymentId);
+            if (!payment) return;
+
+            const newAmount = prompt('Edit payment amount (₹):', payment.amount);
+            if (newAmount === null) return;
+
+            const newDate = prompt('Edit payment date (YYYY-MM-DD):', payment.date);
+            if (newDate === null) return;
+
+            let newNote = payment.note || '';
+            if (parseFloat(newAmount) === 0) {
+                // If it's a no-payment, require reason
+                while (!newNote || newNote.length < 20) {
+                    newNote = prompt('⚠️ MANDATORY: Reason for no payment\n(Minimum 20 characters required):', newNote);
+                    if (newNote === null) return;
+                    if (!newNote || newNote.trim().length < 20) {
+                        alert('❌ Reason must be at least 20 characters!\nYou entered: ' + (newNote ? newNote.trim().length : 0) + ' characters.');
+                        newNote = '';
+                    }
+                }
+            } else {
+                newNote = prompt('Edit note (optional):', payment.note || '');
+                if (newNote === null) newNote = payment.note || '';
+            }
+
+            try {
+                await updateDoc(doc(db, 'payments', paymentId), {
+                    amount: parseFloat(newAmount),
+                    date: newDate,
+                    note: newNote,
+                    updated_at: new Date().toISOString()
+                });
+                await loadDataFromFirebase();
+                renderLoans();
+            } catch (error) {
+                console.error('Error updating payment:', error);
+                alert('Error updating payment. Please try again.');
+            }
+        }
+
+        async function deletePayment(paymentId, loanId) {
+            if (!confirm('Are you sure you want to delete this payment record?')) return;
+
+            try {
+                await deleteDoc(doc(db, 'payments', paymentId));
+                await loadDataFromFirebase();
+                renderLoans();
+            } catch (error) {
+                console.error('Error deleting payment:', error);
+                alert('Error deleting payment. Please try again.');
+            }
+        }
+
+        // Edit Loan Function
+        async function editLoan(loanId) {
+            const loan = loans.find(l => l.id === loanId);
+            if (!loan) return;
+
+            // Check if user is admin
+            if (currentUser.role !== 'admin') {
+                alert('Only administrators can edit loans!');
+                return;
+            }
+
+            // Prompt for new values (pre-filled with current values)
+            const newBorrowerName = prompt('Borrower Name:', loan.borrower_name);
+            if (newBorrowerName === null) return; // Cancelled
+
+            const newDate = prompt('Loan Date (YYYY-MM-DD):', loan.date);
+            if (newDate === null) return;
+
+            const newPurpose = prompt('Purpose:', loan.purpose);
+            if (newPurpose === null) return;
+
+            const newLoanGiver = prompt('Loan Giver (optional):', loan.loan_giver || '');
+            if (newLoanGiver === null) return;
+
+            const newCollector = prompt('Collector (Edward, Suresh, Samuel, Irina, or Ivan):', loan.collector || '');
+            if (newCollector === null) return;
+
+            const newCurrency = prompt('Currency (INR, CHF, or MXN):', loan.currency || 'INR');
+            if (newCurrency === null) return;
+
+            const newAmount = prompt('Amount:', loan.amount);
+            if (newAmount === null) return;
+
+            const newMonthlyPayment = prompt('Monthly Payment (leave empty for "No monthly payment"):', loan.monthly_payment || '');
+            if (newMonthlyPayment === null) return;
+
+            const newMonthlyPaymentCurrency = prompt('Monthly Payment Currency (INR, CHF, or MXN):', loan.monthly_payment_currency || loan.currency || 'INR');
+            if (newMonthlyPaymentCurrency === null) return;
+
+            const newComments = prompt('Comments (optional):', loan.comments || '');
+            if (newComments === null) return;
+
+            // Calculate months from monthly payment
+            const monthlyPaymentValue = parseFloat(newMonthlyPayment) || 0;
+            const calculatedMonths = monthlyPaymentValue > 0 ? Math.ceil(parseFloat(newAmount) / monthlyPaymentValue) : 0;
+            const paymentType = monthlyPaymentValue > 0 ? 'regular' : 'none';
+
+            // Confirm changes
+            if (!confirm('Are you sure you want to update this loan?')) return;
+
+            try {
+                const loanRef = doc(db, 'loans', loanId);
+                await updateDoc(loanRef, {
+                    borrower_name: newBorrowerName,
+                    date: newDate,
+                    purpose: newPurpose,
+                    loan_giver: newLoanGiver,
+                    collector: newCollector,
+                    currency: newCurrency,
+                    amount: parseFloat(newAmount),
+                    monthly_payment: monthlyPaymentValue,
+                    monthly_payment_currency: newMonthlyPaymentCurrency.toUpperCase(),
+                    months: calculatedMonths,
+                    payment_type: paymentType,
+                    comments: newComments,
+                    updated_at: new Date().toISOString()
+                });
+                await loadDataFromFirebase();
+                renderLoans();
+            } catch (error) {
+                console.error('Error updating loan:', error);
+                alert('Error updating loan. Please try again.');
+            }
+        }
+
+        // Delete Loan Function
+        async function deleteLoan(loanId) {
+            const loan = loans.find(l => l.id === loanId);
+            if (!loan) return;
+
+            // Check if user is admin
+            if (currentUser.role !== 'admin') {
+                alert('Only administrators can delete loans!');
+                return;
+            }
+
+            // Get all payments for this loan
+            const loanPayments = payments.filter(p => p.loan_id === loanId);
+
+            // Confirm deletion
+            const confirmMsg = `Are you sure you want to DELETE this loan?\n\n` +
+                `Borrower: ${loan.borrower_name}\n` +
+                `Purpose: ${loan.purpose}\n` +
+                `Amount: ${loan.currency} ${loan.amount.toLocaleString()}\n` +
+                `\nThis will also delete ${loanPayments.length} payment record(s).\n\n` +
+                `THIS CANNOT BE UNDONE!`;
+
+            if (!confirm(confirmMsg)) return;
+
+            // Double confirmation
+            if (!confirm('FINAL CONFIRMATION: Delete this loan permanently?')) return;
+
+            try {
+                // Delete the loan
+                await deleteDoc(doc(db, 'loans', loanId));
+
+                // Delete all associated payments
+                for (const payment of loanPayments) {
+                    await deleteDoc(doc(db, 'payments', payment.id));
+                }
+
+            } catch (error) {
+                console.error('Error deleting loan:', error);
+                alert('Error deleting loan. Please try again.');
+            }
+        }
+
+        // Print/PDF Generation - Cross-browser compatible
+        function generatePrintDocument(borrowerName) {
+            const borrowerLoans = loans.filter(l => l.borrower_name === borrowerName);
+            if (borrowerLoans.length === 0) return;
+
+            let totalBorrowed = 0, totalPaid = 0;
+            borrowerLoans.forEach(l => {
+                const stats = getStats(l);
+                const rate = getChfRate(l.date);
+                totalBorrowed += l.currency === 'INR' ? l.amount : l.amount * rate;
+                totalPaid += stats.paid;
+            });
+            const overallProgress = (totalPaid / totalBorrowed * 100).toFixed(2);
+
+            let html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Loan Summary - ${borrowerName}</title>
+    <style>
+        @page { size: portrait; margin: 0.75in; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            font-size: 10pt; 
+            line-height: 1.2; 
+            color: #000;
+            background: white;
+        }
+        .title-section { text-align: center; margin-bottom: 10px; }
+        h1 { color: #2E5090; font-size: 14pt; font-weight: bold; }
+        h2 { 
+            background-color: #2E5090; 
+            color: white; 
+            font-size: 11pt; 
+            font-weight: bold; 
+            margin-top: 12px; 
+            margin-bottom: 6px; 
+            padding: 4px 8px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .export-date { text-align: center; color: #666; font-size: 8pt; margin: 2px 0 12px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 4px 0 8px 0; font-size: 10pt; }
+        td, th { border: 1px solid #CCC; padding: 4px 6px; text-align: left; vertical-align: top; }
+        th { font-weight: bold; font-size: 10pt; }
+        .label-cell { 
+            background-color: #E8F1F8; 
+            font-weight: bold; 
+            width: 40%;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .value-cell { width: 60%; }
+        .right-align { text-align: right; }
+        .progress-text { color: #2E8B57; font-weight: bold; }
+        .page-break { page-break-before: always; }
+    </style>
+</head>
+<body>`;
+
+            html += '<div class="title-section"><h1>Complete Loan Summary - ' + borrowerName + '</h1></div>';
+            html += '<div class="export-date">Export Date: ' + new Date().toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'}) + '</div>';
+            html += '<h2>Overall Summary</h2>';
+            html += '<table>';
+            html += '<tr><td class="label-cell">Total Loans</td><td class="value-cell right-align"><strong>' + borrowerLoans.length + '</strong></td></tr>';
+            html += '<tr><td class="label-cell">Total Borrowed</td><td class="value-cell right-align"><strong>₹ ' + totalBorrowed.toLocaleString('en-IN') + '</strong></td></tr>';
+            html += '<tr><td class="label-cell">Total Paid</td><td class="value-cell right-align"><strong>₹ ' + totalPaid.toLocaleString('en-IN') + '</strong></td></tr>';
+            html += '<tr><td class="label-cell">Total Remaining</td><td class="value-cell right-align"><strong>₹ ' + (totalBorrowed - totalPaid).toLocaleString('en-IN') + '</strong></td></tr>';
+            html += '<tr><td class="label-cell">Overall Progress</td><td class="value-cell right-align"><strong class="progress-text">' + overallProgress + '%</strong></td></tr>';
+            html += '</table>';
+
+            borrowerLoans.forEach((loan, idx) => {
+                const loanPayments = payments.filter(p => p.loan_id === loan.id);
+                const stats = getStats(loan);
+                const rate = getChfRate(loan.date);
+                const amountInINR = loan.currency === 'INR' ? loan.amount : loan.amount * rate;
+
+                if (idx > 0) html += '<div class="page-break"></div>';
+
+                html += '<h2>Loan ' + (idx + 1) + ': ' + loan.purpose + '</h2>';
+                html += '<table>';
+                html += '<tr><td class="label-cell">Purpose</td><td class="value-cell">' + loan.purpose + '</td></tr>';
+                html += '<tr><td class="label-cell">Loan Giver</td><td class="value-cell">' + (loan.loan_giver || 'N/A') + '</td></tr>';
+                html += '<tr><td class="label-cell">Loan Date</td><td class="value-cell">' + new Date(loan.date).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'}) + '</td></tr>';
+                html += '<tr><td class="label-cell">Currency</td><td class="value-cell">' + (loan.currency === 'CHF' ? 'CHF (Swiss Franc)' : 'INR (Indian Rupee)') + '</td></tr>';
+                html += '<tr><td class="label-cell">Original Amount</td><td class="value-cell">' + (loan.currency === 'CHF' ? 'CHF ' : '₹ ') + loan.amount.toLocaleString('en-IN') + '</td></tr>';
+                
+                if (loan.currency === 'CHF') {
+                    html += '<tr><td class="label-cell">Amount in INR</td><td class="value-cell">₹ ' + amountInINR.toLocaleString('en-IN') + '</td></tr>';
+                    html += '<tr><td class="label-cell">Exchange Rate</td><td class="value-cell">1 CHF = ₹ ' + rate + '</td></tr>';
+                }
+                
+                html += '<tr><td class="label-cell">Duration</td><td class="value-cell">' + loan.months + ' months</td></tr>';
+                html += '<tr><td class="label-cell">Monthly Payment</td><td class="value-cell">₹ ' + loan.monthly_payment.toLocaleString('en-IN') + '</td></tr>';
+                
+                if (loan.comments) {
+                    html += '<tr><td class="label-cell">Comments</td><td class="value-cell">' + loan.comments + '</td></tr>';
+                }
+                html += '</table>';
+
+                html += '<h2>Payment History</h2>';
+                html += '<table><tr><th>Date</th><th class="right-align">Amount</th><th class="right-align">Running Total</th></tr>';
+                
+                let runningTotal = 0;
+                if (loanPayments.length === 0) {
+                    html += '<tr><td colspan="3" style="text-align:center;color:#999;font-style:italic;padding:8px;">No payments yet</td></tr>';
+                } else {
+                    loanPayments.forEach(payment => {
+                        runningTotal += payment.amount;
+                        html += '<tr><td>' + new Date(payment.date).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'}) + '</td>';
+                        html += '<td class="right-align">₹ ' + payment.amount.toLocaleString('en-IN') + '</td>';
+                        html += '<td class="right-align">₹ ' + runningTotal.toLocaleString('en-IN') + '</td></tr>';
+                    });
+                }
+                html += '</table>';
+
+                html += '<h2>Loan Summary</h2>';
+                html += '<table>';
+                html += '<tr><td class="label-cell">Total Paid</td><td class="value-cell right-align"><strong>₹ ' + stats.paid.toLocaleString('en-IN') + '</strong></td></tr>';
+                html += '<tr><td class="label-cell">Total Remaining</td><td class="value-cell right-align"><strong>₹ ' + stats.remaining.toLocaleString('en-IN') + '</strong></td></tr>';
+                html += '<tr><td class="label-cell">Progress</td><td class="value-cell right-align"><strong class="progress-text">' + stats.progress.toFixed(2) + '%</strong></td></tr>';
+                html += '<tr><td class="label-cell">Payments Made</td><td class="value-cell right-align"><strong>' + stats.count + ' of ' + loan.months + '</strong></td></tr>';
+                html += '</table>';
+            });
+
+            html += `</body></html>`;
+
+            // Open in new window and print - works in ALL browsers
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(html);
+            printWindow.document.close();
+            
+            // Wait for content to load, then print
+            printWindow.onload = function() {
+                setTimeout(() => {
+                    printWindow.print();
+                    // Close window after printing (optional)
+                    // printWindow.close();
+                }, 500);
+            };
+        }
+
+        // Excel Export per Borrower
+        function exportBorrowerToExcel(borrowerName) {
+            try {
+            const cleanName = borrowerName.replace(/^\d+\s*-\s*/, '');
+            const borrowerLoans = loans.filter(l => l.borrower_name === cleanName);
+            
+            if (borrowerLoans.length === 0) {
+                alert('No loans found for: ' + borrowerName);
+                return;
+            }
+            
+            // Styles
+            const sTitle = { font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4338CA" } }, alignment: { horizontal: "left", vertical: "center" } };
+            const sSub = { font: { sz: 11, color: { rgb: "6B7280" } }, alignment: { horizontal: "left" } };
+            const sSection = { font: { bold: true, sz: 12, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "6366F1" } }, alignment: { horizontal: "left", vertical: "center" } };
+            const sHead = { font: { bold: true, sz: 10, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F46E5" } }, alignment: { horizontal: "center", vertical: "center" } };
+            const sLabel = { font: { bold: true, sz: 10, color: { rgb: "374151" } }, fill: { fgColor: { rgb: "F3F4F6" } }, alignment: { horizontal: "left" } };
+            const sVal = { font: { sz: 10 }, alignment: { horizontal: "left" } };
+            const sValN = { font: { sz: 10 }, alignment: { horizontal: "right" }, numFmt: "#,##0" };
+            const sL = { font: { sz: 10 }, alignment: { horizontal: "left" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const sN = { font: { sz: 10 }, alignment: { horizontal: "right" }, numFmt: "#,##0", border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const aL = { font: { sz: 10 }, fill: { fgColor: { rgb: "F9FAFB" } }, alignment: { horizontal: "left" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const aN = { font: { sz: 10 }, fill: { fgColor: { rgb: "F9FAFB" } }, alignment: { horizontal: "right" }, numFmt: "#,##0", border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const sTL = { font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "059669" } }, alignment: { horizontal: "right" } };
+            const sTN = { font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "059669" } }, alignment: { horizontal: "right" }, numFmt: "#,##0" };
+            const sTE = { fill: { fgColor: { rgb: "059669" } } };
+            
+            const ws = XLSX.utils.aoa_to_sheet([[]]);
+            ws['!rows'] = [];
+            ws['!cols'] = [{ wch: 22 }, { wch: 18 }, { wch: 16 }, { wch: 16 }];
+            
+            // Row 0: Title
+            XLSX.utils.sheet_add_aoa(ws, [['  Loan Summary \u2014 ' + cleanName]], { origin: 'A1' });
+            for (let c = 0; c < 4; c++) { const cell = XLSX.utils.encode_cell({ r: 0, c }); if (!ws[cell]) ws[cell] = { v: '', t: 's' }; ws[cell].s = sTitle; }
+            ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }];
+            ws['!rows'][0] = { hpt: 36 };
+            
+            // Row 1: Subtitle
+            XLSX.utils.sheet_add_aoa(ws, [['  ' + new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) + '  |  ' + borrowerLoans.length + ' loans']], { origin: 'A2' });
+            for (let c = 0; c < 4; c++) { const cell = XLSX.utils.encode_cell({ r: 1, c }); if (!ws[cell]) ws[cell] = { v: '', t: 's' }; ws[cell].s = sSub; }
+            ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 3 } });
+            
+            let row = 3; // current row pointer
+            let totalBorrowed = 0;
+            let totalPaid = 0;
+            
+            borrowerLoans.forEach((loan, idx) => {
+                const stats = getStats(loan);
+                const rate = getChfRate(loan.date);
+                const amt = parseFloat(loan.amount) || 0;
+                const amountInINR = loan.currency === 'INR' ? amt : amt * rate;
+                const loanPayments = payments.filter(p => p.loan_id === loan.id);
+                totalBorrowed += amountInINR;
+                totalPaid += stats.paid;
+                
+                // Section header
+                XLSX.utils.sheet_add_aoa(ws, [['  Loan ' + (idx + 1) + ': ' + (loan.purpose || '')]], { origin: XLSX.utils.encode_cell({ r: row, c: 0 }) });
+                for (let c = 0; c < 4; c++) { const cell = XLSX.utils.encode_cell({ r: row, c }); if (!ws[cell]) ws[cell] = { v: '', t: 's' }; ws[cell].s = sSection; }
+                ws['!merges'].push({ s: { r: row, c: 0 }, e: { r: row, c: 3 } });
+                ws['!rows'][row] = { hpt: 26 };
+                row++;
+                
+                // Loan details
+                const details = [
+                    ['Loan Giver', loan.loan_giver || 'N/A', 'Date', loan.date],
+                    ['Currency', loan.currency, 'Amount', amt],
+                    ['Amount (INR)', Math.round(amountInINR), 'Duration', (loan.months || 0) + ' months'],
+                    ['Monthly Payment', parseFloat(loan.monthly_payment) || 0, '', '']
+                ];
+                if (loan.comments) details.push(['Comments', loan.comments, '', '']);
+                
+                details.forEach(d => {
+                    XLSX.utils.sheet_add_aoa(ws, [d], { origin: XLSX.utils.encode_cell({ r: row, c: 0 }) });
+                    const c0 = XLSX.utils.encode_cell({ r: row, c: 0 }); if (ws[c0]) ws[c0].s = sLabel;
+                    const c1 = XLSX.utils.encode_cell({ r: row, c: 1 }); if (ws[c1]) { ws[c1].s = typeof d[1] === 'number' ? sValN : sVal; if (typeof d[1] === 'number') ws[c1].t = 'n'; }
+                    const c2 = XLSX.utils.encode_cell({ r: row, c: 2 }); if (ws[c2]) ws[c2].s = sLabel;
+                    const c3 = XLSX.utils.encode_cell({ r: row, c: 3 }); if (ws[c3]) { ws[c3].s = typeof d[3] === 'number' ? sValN : sVal; if (typeof d[3] === 'number') ws[c3].t = 'n'; }
+                    row++;
+                });
+                
+                row++; // spacer
+                
+                // Payment history header
+                const payHeaders = ['Date', 'Amount', 'Running Total', 'Remaining'];
+                XLSX.utils.sheet_add_aoa(ws, [payHeaders], { origin: XLSX.utils.encode_cell({ r: row, c: 0 }) });
+                for (let c = 0; c < 4; c++) { const cell = XLSX.utils.encode_cell({ r: row, c }); if (ws[cell]) ws[cell].s = sHead; }
+                ws['!rows'][row] = { hpt: 24 };
+                row++;
+                
+                // Payment rows
+                let runningTotal = 0;
+                if (loanPayments.length === 0) {
+                    XLSX.utils.sheet_add_aoa(ws, [['No payments yet', '', '', Math.round(amountInINR)]], { origin: XLSX.utils.encode_cell({ r: row, c: 0 }) });
+                    for (let c = 0; c < 4; c++) { const cell = XLSX.utils.encode_cell({ r: row, c }); if (ws[cell]) { ws[cell].s = c >= 1 ? sN : sL; if (c >= 1 && typeof ws[cell].v === 'number') ws[cell].t = 'n'; } }
+                    row++;
+                } else {
+                    loanPayments.forEach((payment, pi) => {
+                        runningTotal += payment.amount;
+                        const pRow = [payment.date, payment.amount, runningTotal, Math.round(amountInINR) - runningTotal];
+                        XLSX.utils.sheet_add_aoa(ws, [pRow], { origin: XLSX.utils.encode_cell({ r: row, c: 0 }) });
+                        const alt = pi % 2 === 1;
+                        for (let c = 0; c < 4; c++) {
+                            const cell = XLSX.utils.encode_cell({ r: row, c });
+                            if (ws[cell]) { ws[cell].s = c >= 1 ? (alt ? aN : sN) : (alt ? aL : sL); if (c >= 1) ws[cell].t = 'n'; }
+                        }
+                        row++;
+                    });
+                }
+                
+                row += 2; // spacing between loans
+            });
+            
+            // Overall summary
+            XLSX.utils.sheet_add_aoa(ws, [['OVERALL SUMMARY']], { origin: XLSX.utils.encode_cell({ r: row, c: 0 }) });
+            for (let c = 0; c < 4; c++) { const cell = XLSX.utils.encode_cell({ r: row, c }); if (!ws[cell]) ws[cell] = { v: '', t: 's' }; ws[cell].s = sSection; }
+            ws['!merges'].push({ s: { r: row, c: 0 }, e: { r: row, c: 3 } });
+            row++;
+            
+            const summary = [
+                ['Total Loans', borrowerLoans.length, '', ''],
+                ['Total Borrowed (INR)', Math.round(totalBorrowed), '', ''],
+                ['Total Paid', totalPaid, '', ''],
+                ['Total Remaining', Math.round(totalBorrowed) - totalPaid, '', ''],
+                ['Progress', totalBorrowed > 0 ? ((totalPaid / totalBorrowed) * 100).toFixed(1) + '%' : '0%', '', '']
+            ];
+            summary.forEach(d => {
+                XLSX.utils.sheet_add_aoa(ws, [d], { origin: XLSX.utils.encode_cell({ r: row, c: 0 }) });
+                const c0 = XLSX.utils.encode_cell({ r: row, c: 0 }); if (ws[c0]) ws[c0].s = sLabel;
+                const c1 = XLSX.utils.encode_cell({ r: row, c: 1 }); if (ws[c1]) { ws[c1].s = typeof d[1] === 'number' ? sValN : sVal; if (typeof d[1] === 'number') ws[c1].t = 'n'; }
+                row++;
+            });
+            
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Loans');
+            XLSX.writeFile(wb, cleanName.replace(/\s+/g, '_') + '_Loans.xlsx');
+            
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Export error: ' + error.message);
+            }
+        }
+
+        function exportFilteredLoans() {
+            try {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const yearFilter = document.getElementById('filterYear').value;
+            const collectorFilter = document.getElementById('filterCollector').value;
+            const currencyFilter = document.getElementById('filterCurrency').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            const purposeFilter = document.getElementById('filterPurpose').value;
+            const loanGiverFilter = document.getElementById('filterLoanGiver').value;
+            
+            if (!loans || loans.length === 0) { alert('No loans loaded yet.'); return; }
+            
+            const filtered = loans.filter(l => {
+                if (searchTerm && !l.borrower_name.toLowerCase().includes(searchTerm)) return false;
+                if (yearFilter && new Date(l.date).getFullYear().toString() !== yearFilter) return false;
+                if (collectorFilter && l.collector !== collectorFilter) return false;
+                if (currencyFilter && l.currency !== currencyFilter) return false;
+                if (purposeFilter && l.purpose !== purposeFilter) return false;
+                if (loanGiverFilter && (l.loan_giver || '').trim().toLowerCase() !== loanGiverFilter) return false;
+                if (statusFilter) {
+                    const s = getStats(l);
+                    if (statusFilter === 'active' && s.remaining <= 0) return false;
+                    if (statusFilter === 'completed' && s.remaining > 0) return false;
+                }
+                return true;
+            });
+            
+            if (filtered.length === 0) { alert('No loans match current filters'); return; }
+            
+            const filters = [];
+            if (searchTerm) filters.push('Search="' + searchTerm + '"');
+            if (yearFilter) filters.push('Year=' + yearFilter);
+            if (collectorFilter) filters.push('Collector=' + collectorFilter);
+            if (loanGiverFilter) filters.push('Loan Giver=' + loanGiverFilter);
+            if (currencyFilter) filters.push('Currency=' + currencyFilter);
+            if (purposeFilter) filters.push('Purpose=' + purposeFilter);
+            if (statusFilter) filters.push('Status=' + statusFilter);
+            const filterDesc = filters.length > 0 ? filters.join(', ') : 'All Loans';
+            
+            // Styles
+            const sTitle = { font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4338CA" } }, alignment: { horizontal: "left", vertical: "center" } };
+            const sSub = { font: { sz: 11, color: { rgb: "6B7280" } }, alignment: { horizontal: "left" } };
+            const sHead = { font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F46E5" } }, alignment: { horizontal: "center", vertical: "center", wrapText: true }, border: { bottom: { style: "medium", color: { rgb: "3730A3" } } } };
+            const sL = { font: { sz: 10 }, alignment: { horizontal: "left", vertical: "center" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const sC = { font: { sz: 10 }, alignment: { horizontal: "center", vertical: "center" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const sN = { font: { sz: 10 }, alignment: { horizontal: "right", vertical: "center" }, numFmt: "#,##0", border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const aL = { font: { sz: 10 }, fill: { fgColor: { rgb: "F9FAFB" } }, alignment: { horizontal: "left", vertical: "center" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const aC = { font: { sz: 10 }, fill: { fgColor: { rgb: "F9FAFB" } }, alignment: { horizontal: "center", vertical: "center" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const aN = { font: { sz: 10 }, fill: { fgColor: { rgb: "F9FAFB" } }, alignment: { horizontal: "right", vertical: "center" }, numFmt: "#,##0", border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const sTL = { font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "059669" } }, alignment: { horizontal: "right", vertical: "center" } };
+            const sTN = { font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "059669" } }, alignment: { horizontal: "right", vertical: "center" }, numFmt: "#,##0" };
+            const sTE = { fill: { fgColor: { rgb: "059669" } } };
+            
+            const headers = ['Borrower', 'Loan Date', 'Purpose', 'Loan Giver', 'Currency', 'Amount', 'Amount (INR)', 'Months', 'Monthly Payment', 'Total Paid'];
+            
+            const dataRows = filtered.map(loan => {
+                const stats = getStats(loan);
+                const rate = getChfRate(loan.date);
+                const amount = parseFloat(loan.amount) || 0;
+                const amountInINR = loan.currency === 'INR' ? amount : amount * rate;
+                return [
+                    loan.borrower_name, loan.date, loan.purpose || '', loan.loan_giver || '',
+                    loan.currency || 'INR', amount, Math.round(amountInINR),
+                    parseInt(loan.months) || 0, parseFloat(loan.monthly_payment) || 0, stats.paid
+                ];
+            });
+            
+            const totalBorrowed = filtered.reduce((sum, l) => {
+                const rate = getChfRate(l.date);
+                const amt = parseFloat(l.amount) || 0;
+                return sum + (l.currency === 'INR' ? amt : amt * rate);
+            }, 0);
+            const totalPaid = filtered.reduce((sum, l) => sum + getStats(l).paid, 0);
+            
+            // Build worksheet
+            const ws = XLSX.utils.aoa_to_sheet([[]]);
+            ws['!rows'] = [];
+            
+            // Row 0: Title (indigo background, white text)
+            XLSX.utils.sheet_add_aoa(ws, [['  HOPE ASSOCIATION \u2014 Loan Export']], { origin: 'A1' });
+            for (let c = 0; c < 10; c++) {
+                const cell = XLSX.utils.encode_cell({ r: 0, c });
+                if (!ws[cell]) ws[cell] = { v: '', t: 's' };
+                ws[cell].s = sTitle;
+            }
+            ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
+            ws['!rows'][0] = { hpt: 36 };
+            
+            // Row 1: Subtitle
+            XLSX.utils.sheet_add_aoa(ws, [['  ' + new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) + '  |  ' + filterDesc + '  |  ' + filtered.length + ' loans']], { origin: 'A2' });
+            for (let c = 0; c < 10; c++) {
+                const cell = XLSX.utils.encode_cell({ r: 1, c });
+                if (!ws[cell]) ws[cell] = { v: '', t: 's' };
+                ws[cell].s = sSub;
+            }
+            ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 9 } });
+            
+            // Row 2: Spacer
+            XLSX.utils.sheet_add_aoa(ws, [[]], { origin: 'A3' });
+            
+            // Row 3: Headers (indigo background)
+            XLSX.utils.sheet_add_aoa(ws, [headers], { origin: 'A4' });
+            for (let c = 0; c < headers.length; c++) {
+                const cell = XLSX.utils.encode_cell({ r: 3, c });
+                ws[cell].s = sHead;
+            }
+            ws['!rows'][3] = { hpt: 28 };
+            
+            // Data rows with alternating colors
+            dataRows.forEach((row, i) => {
+                const r = 4 + i;
+                XLSX.utils.sheet_add_aoa(ws, [row], { origin: XLSX.utils.encode_cell({ r, c: 0 }) });
+                const alt = i % 2 === 1;
+                for (let c = 0; c < row.length; c++) {
+                    const cell = XLSX.utils.encode_cell({ r, c });
+                    if (!ws[cell]) continue;
+                    if (c >= 5 && c <= 9) { ws[cell].s = alt ? aN : sN; ws[cell].t = 'n'; }
+                    else if (c === 4) { ws[cell].s = alt ? aC : sC; }
+                    else { ws[cell].s = alt ? aL : sL; }
+                }
+            });
+            
+            // Totals row (green background)
+            const totalMonthlyPay = filtered.reduce((sum, l) => sum + (parseFloat(l.monthly_payment) || 0), 0);
+            const tr = 4 + dataRows.length + 1;
+            XLSX.utils.sheet_add_aoa(ws, [['TOTALS', '', '', '', '', '', Math.round(totalBorrowed), '', totalMonthlyPay, totalPaid]], { origin: XLSX.utils.encode_cell({ r: tr, c: 0 }) });
+            for (let c = 0; c < 10; c++) {
+                const cell = XLSX.utils.encode_cell({ r: tr, c });
+                if (!ws[cell]) ws[cell] = { v: '', t: 's' };
+                if (c === 0) ws[cell].s = sTL;
+                else if (c === 6 || c === 8 || c === 9) { ws[cell].s = sTN; ws[cell].t = 'n'; }
+                else ws[cell].s = sTE;
+            }
+            ws['!rows'][tr] = { hpt: 26 };
+            
+            // Column widths
+            ws['!cols'] = [
+                { wch: 28 }, { wch: 12 }, { wch: 22 }, { wch: 18 }, { wch: 10 },
+                { wch: 13 }, { wch: 15 }, { wch: 9 }, { wch: 15 }, { wch: 14 }
+            ];
+            
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Loans');
+            
+            let filename = 'Hope_Loans_';
+            if (collectorFilter) filename += collectorFilter + '_';
+            if (searchTerm) filename += searchTerm.replace(/\s+/g, '_') + '_';
+            filename += new Date().toISOString().split('T')[0] + '.xlsx';
+            
+            XLSX.writeFile(wb, filename);
+            
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Export error: ' + error.message);
+            }
+        }
+
+        function exportAllToExcel() {
+            if (loans.length === 0) {
+                alert('No loans to export');
+                return;
+            }
+            
+            let csv = 'HOPE ASSOCIATION - ALL LOANS SUMMARY\n';
+            csv += 'Export Date: ' + new Date().toLocaleDateString('en-IN') + '\n';
+            csv += 'Total Loans: ' + loans.length + '\n\n';
+            csv += 'Borrower,Loan Date,Purpose,Loan Giver,Currency,Amount,INR Amount,Months,Monthly Payment,Total Paid,Remaining,Progress %,Payments Made,Comments\n';
+            
+            loans.forEach(loan => {
+                const stats = getStats(loan);
+                const rate = getChfRate(loan.date);
+                const amountInINR = loan.currency === 'INR' ? loan.amount : loan.amount * rate;
+                csv += '"' + loan.borrower_name + '",' + loan.date + ',"' + loan.purpose + '","' + (loan.loan_giver || '') + '",' + loan.currency + ',' + loan.amount + ',Rs ' + amountInINR.toLocaleString('en-IN') + ',' + loan.months + ',Rs ' + loan.monthly_payment.toLocaleString('en-IN') + ',Rs ' + stats.paid.toLocaleString('en-IN') + ',Rs ' + stats.remaining.toLocaleString('en-IN') + ',' + stats.progress.toFixed(1) + '%,' + stats.count + ' of ' + loan.months + ',"' + (loan.comments || '') + '"\n';
+            });
+            
+            const totalBorrowed = loans.reduce((sum, l) => {
+                const rate = getChfRate(l.date);
+                return sum + (l.currency === 'INR' ? l.amount : l.amount * rate);
+            }, 0);
+            const totalPaid = loans.reduce((sum, l) => sum + getStats(l).paid, 0);
+            
+            csv += '\n\nOVERALL TOTALS\n';
+            csv += 'Total Loans,' + loans.length + '\n';
+            csv += 'Total Borrowed,Rs ' + totalBorrowed.toLocaleString('en-IN') + '\n';
+            csv += 'Total Paid,Rs ' + totalPaid.toLocaleString('en-IN') + '\n';
+            csv += 'Total Remaining,Rs ' + (totalBorrowed - totalPaid).toLocaleString('en-IN') + '\n';
+            csv += 'Overall Progress,' + ((totalPaid / totalBorrowed) * 100).toFixed(1) + '%\n';
+            
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csv], {type: 'text/csv;charset=utf-8;'});
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Hope_All_Loans_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Backup All Data
+        function backupAllData() {
+            const backup = {
+                backup_date: new Date().toISOString(),
+                backup_version: '1.0',
+                loans: loans,
+                payments: payments,
+                chfRates: chfRates
+            };
+
+            const dataStr = JSON.stringify(backup, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Hope_Association_Backup_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            alert('✅ Backup downloaded!\n\nSave this file in a SAFE place:\n- Google Drive\n- Dropbox\n- External hard drive\n\nYou can restore from this backup anytime!');
+        }
+
+        // Restore from Backup (for admins only)
+        async function restoreFromBackup() {
+            if (currentUser.role !== 'admin') {
+                alert('Only administrators can restore backups!');
+                return;
+            }
+
+            if (!confirm('⚠️ WARNING: This will REPLACE all current data with the backup!\n\nAre you sure you want to continue?')) {
+                return;
+            }
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const backup = JSON.parse(event.target.result);
+
+                        if (!backup.loans || !backup.payments || !backup.chfRates) {
+                            alert('❌ Invalid backup file!');
+                            return;
+                        }
+
+                        if (!confirm(`Restore backup from ${new Date(backup.backup_date).toLocaleDateString()}?\n\nThis will:\n- Delete all current loans\n- Delete all current payments\n- Delete all current rates\n- Restore from backup\n\nCONTINUE?`)) {
+                            return;
+                        }
+
+                        // Delete all current data
+                        const loansSnapshot = await getDocs(collection(db, 'loans'));
+                        for (const doc of loansSnapshot.docs) {
+                            await deleteDoc(doc.ref);
+                        }
+
+                        const paymentsSnapshot = await getDocs(collection(db, 'payments'));
+                        for (const doc of paymentsSnapshot.docs) {
+                            await deleteDoc(doc.ref);
+                        }
+
+                        const ratesSnapshot = await getDocs(collection(db, 'chfRates'));
+                        for (const doc of ratesSnapshot.docs) {
+                            await deleteDoc(doc.ref);
+                        }
+
+                        // Restore loans
+                        for (const loan of backup.loans) {
+                            const {id, ...loanData} = loan;
+                            await addDoc(collection(db, 'loans'), loanData);
+                        }
+
+                        // Restore payments
+                        for (const payment of backup.payments) {
+                            const {id, ...paymentData} = payment;
+                            await addDoc(collection(db, 'payments'), paymentData);
+                        }
+
+                        // Restore rates
+                        for (const [year, rate] of Object.entries(backup.chfRates)) {
+                            await addDoc(collection(db, 'chfRates'), {
+                                year: parseInt(year),
+                                rate: parseFloat(rate)
+                            });
+                        }
+
+                        alert('✅ Backup restored successfully!\n\nRefreshing page...');
+                        location.reload();
+
+                    } catch (error) {
+                        console.error('Error restoring backup:', error);
+                        alert('❌ Error restoring backup: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Export simple collector payment list as Excel (for collectors to use in the field)
+        function exportCollectorList(collectorName) {
+            try {
+            const today = new Date();
+            const monthName = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            const collectorLoans = loans.filter(l => {
+                if (l.collector !== collectorName) return false;
+                const stats = getStats(l);
+                const mp = parseFloat(l.monthly_payment) || 0;
+                return stats.remaining > 0 && mp > 0;
+            });
+            
+            if (collectorLoans.length === 0) {
+                alert('No active loans for ' + collectorName);
+                return;
+            }
+            
+            collectorLoans.sort((a, b) => {
+                const nameA = a.borrower_name.replace(/^\d+\s*-\s*/, '');
+                const nameB = b.borrower_name.replace(/^\d+\s*-\s*/, '');
+                return nameA.localeCompare(nameB);
+            });
+            
+            // Styles
+            const sTitle = { font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4338CA" } }, alignment: { horizontal: "left", vertical: "center" } };
+            const sSub = { font: { sz: 11, color: { rgb: "6B7280" } }, alignment: { horizontal: "left" } };
+            const sHead = { font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F46E5" } }, alignment: { horizontal: "center", vertical: "center" }, border: { bottom: { style: "medium", color: { rgb: "3730A3" } } } };
+            const sL = { font: { sz: 10 }, alignment: { horizontal: "left", vertical: "center" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const sC = { font: { sz: 10 }, alignment: { horizontal: "center", vertical: "center" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const sN = { font: { sz: 10 }, alignment: { horizontal: "right", vertical: "center" }, numFmt: "#,##0", border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const aL = { font: { sz: 10 }, fill: { fgColor: { rgb: "F9FAFB" } }, alignment: { horizontal: "left", vertical: "center" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const aC = { font: { sz: 10 }, fill: { fgColor: { rgb: "F9FAFB" } }, alignment: { horizontal: "center", vertical: "center" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const aN = { font: { sz: 10 }, fill: { fgColor: { rgb: "F9FAFB" } }, alignment: { horizontal: "right", vertical: "center" }, numFmt: "#,##0", border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } } } };
+            const sTL = { font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "059669" } }, alignment: { horizontal: "right", vertical: "center" } };
+            const sTN = { font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "059669" } }, alignment: { horizontal: "right", vertical: "center" }, numFmt: "#,##0" };
+            const sTE = { fill: { fgColor: { rgb: "059669" } } };
+            const sCheck = { font: { sz: 10 }, alignment: { horizontal: "center", vertical: "center" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } }, left: { style: "thin", color: { rgb: "D1D5DB" } }, right: { style: "thin", color: { rgb: "D1D5DB" } }, top: { style: "thin", color: { rgb: "D1D5DB" } } } };
+            const aCheck = { font: { sz: 10 }, fill: { fgColor: { rgb: "F9FAFB" } }, alignment: { horizontal: "center", vertical: "center" }, border: { bottom: { style: "thin", color: { rgb: "E5E7EB" } }, left: { style: "thin", color: { rgb: "D1D5DB" } }, right: { style: "thin", color: { rgb: "D1D5DB" } }, top: { style: "thin", color: { rgb: "D1D5DB" } } } };
+            
+            const headers = ['No.', 'Name', 'Loan Type', 'Monthly Amount (\u20b9)', 'Paid \u2713'];
+            
+            const ws = XLSX.utils.aoa_to_sheet([[]]);
+            ws['!rows'] = [];
+            
+            // Row 0: Title
+            XLSX.utils.sheet_add_aoa(ws, [['  Payment Collection \u2014 ' + collectorName]], { origin: 'A1' });
+            for (let c = 0; c < 5; c++) {
+                const cell = XLSX.utils.encode_cell({ r: 0, c });
+                if (!ws[cell]) ws[cell] = { v: '', t: 's' };
+                ws[cell].s = sTitle;
+            }
+            ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
+            ws['!rows'][0] = { hpt: 36 };
+            
+            // Row 1: Subtitle
+            XLSX.utils.sheet_add_aoa(ws, [['  ' + monthName + '  |  ' + collectorLoans.length + ' active loans']], { origin: 'A2' });
+            for (let c = 0; c < 5; c++) {
+                const cell = XLSX.utils.encode_cell({ r: 1, c });
+                if (!ws[cell]) ws[cell] = { v: '', t: 's' };
+                ws[cell].s = sSub;
+            }
+            ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 4 } });
+            
+            // Row 2: Spacer
+            XLSX.utils.sheet_add_aoa(ws, [[]], { origin: 'A3' });
+            
+            // Row 3: Headers
+            XLSX.utils.sheet_add_aoa(ws, [headers], { origin: 'A4' });
+            for (let c = 0; c < headers.length; c++) {
+                const cell = XLSX.utils.encode_cell({ r: 3, c });
+                ws[cell].s = sHead;
+            }
+            ws['!rows'][3] = { hpt: 28 };
+            
+            // Data rows
+            let totalMonthly = 0;
+            collectorLoans.forEach((loan, i) => {
+                const r = 4 + i;
+                const mp = parseFloat(loan.monthly_payment) || 0;
+                totalMonthly += mp;
+                const row = [i + 1, loan.borrower_name, loan.purpose || '', mp, ''];
+                XLSX.utils.sheet_add_aoa(ws, [row], { origin: XLSX.utils.encode_cell({ r, c: 0 }) });
+                const alt = i % 2 === 1;
+                for (let c = 0; c < row.length; c++) {
+                    const cell = XLSX.utils.encode_cell({ r, c });
+                    if (!ws[cell]) continue;
+                    if (c === 0) { ws[cell].s = alt ? aC : sC; ws[cell].t = 'n'; }
+                    else if (c === 3) { ws[cell].s = alt ? aN : sN; ws[cell].t = 'n'; }
+                    else if (c === 4) { ws[cell].s = alt ? aCheck : sCheck; }
+                    else { ws[cell].s = alt ? aL : sL; }
+                }
+            });
+            
+            // Totals row
+            const tr = 4 + collectorLoans.length + 1;
+            XLSX.utils.sheet_add_aoa(ws, [['', '', 'TOTAL', totalMonthly, '']], { origin: XLSX.utils.encode_cell({ r: tr, c: 0 }) });
+            for (let c = 0; c < 5; c++) {
+                const cell = XLSX.utils.encode_cell({ r: tr, c });
+                if (!ws[cell]) ws[cell] = { v: '', t: 's' };
+                if (c === 2) ws[cell].s = sTL;
+                else if (c === 3) { ws[cell].s = sTN; ws[cell].t = 'n'; }
+                else ws[cell].s = sTE;
+            }
+            ws['!rows'][tr] = { hpt: 26 };
+            
+            // Column widths
+            ws['!cols'] = [
+                { wch: 5 }, { wch: 28 }, { wch: 22 }, { wch: 18 }, { wch: 10 }
+            ];
+            
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, collectorName);
+            XLSX.writeFile(wb, collectorName + '_Collection_' + today.toISOString().split('T')[0] + '.xlsx');
+            
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Export error: ' + error.message);
+            }
+        }
+
+        // Make functions global for onclick handlers
+        window.exportCollectorList = exportCollectorList;
+        window.recordPayment = recordPayment;
+        window.deleteYearRate = deleteYearRate;
+        window.exportBorrowerToExcel = exportBorrowerToExcel;
+        window.generatePrintDocument = generatePrintDocument;
+        window.recordMissedPayment = recordMissedPayment;
+        window.editPayment = editPayment;
+        window.deletePayment = deletePayment;
+        window.editLoan = editLoan;
+        window.deleteLoan = deleteLoan;
+        window.backupAllData = backupAllData;
+        window.restoreFromBackup = restoreFromBackup;
+        window.approveRequest = approveRequest;
+        window.rejectRequest = rejectRequest;
+        window.deleteRequest = deleteRequest;
+    </script>
+</body>
+</html>
