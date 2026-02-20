@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Support Recipients</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="p-6">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-indigo-900">💝 Monthly Support Recipients</h1>
+                    <p class="text-gray-600 mt-2">Managing 50 families + 30 singles</p>
+                </div>
+                <button id="addRecipientBtn" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
+                    ➕ Add Recipient
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <div class="text-sm text-gray-600">Total Recipients</div>
+                    <div class="text-2xl font-bold text-blue-600" id="totalRecipients">0</div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <div class="text-sm text-gray-600">Families</div>
+                    <div class="text-2xl font-bold text-green-600" id="totalFamilies">0</div>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <div class="text-sm text-gray-600">Singles</div>
+                    <div class="text-2xl font-bold text-purple-600" id="totalSingles">0</div>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-lg">
+                    <div class="text-sm text-gray-600">Monthly INR</div>
+                    <div class="text-2xl font-bold text-orange-600" id="monthlyTotalINR">₹0</div>
+                </div>
+                <div class="bg-indigo-50 p-4 rounded-lg">
+                    <div class="text-sm text-gray-600">Monthly CHF</div>
+                    <div class="text-2xl font-bold text-indigo-600" id="monthlyTotalCHF">CHF 0</div>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mt-6">
+                <input type="text" id="searchInput" placeholder="Search by name..." class="px-4 py-2 border rounded-lg">
+                <select id="filterType" class="px-4 py-2 border rounded-lg">
+                    <option value="">All Types</option>
+                    <option value="Family">Families</option>
+                    <option value="Single">Singles</option>
+                </select>
+                <select id="filterTeam" class="px-4 py-2 border rounded-lg">
+                    <option value="">All Teams</option>
+                </select>
+                <select id="filterSwissAccount" class="px-4 py-2 border rounded-lg">
+                    <option value="">All Swiss Accounts</option>
+                </select>
+                <button id="exportBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                    📊 Export CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Recipients Table -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-indigo-600 text-white text-xs">
+                        <tr>
+                            <th class="px-2 py-2 text-left">ID</th>
+                            <th class="px-2 py-2 text-left">Name</th>
+                            <th class="px-2 py-2 text-left">Type</th>
+                            <th class="px-2 py-2 text-left">Monthly</th>
+                            <th class="px-2 py-2 text-left">Swiss Acc.</th>
+                            <th class="px-2 py-2 text-left">Team</th>
+                            <th class="px-2 py-2 text-left">Bank Details</th>
+                            <th class="px-2 py-2 text-left">Notes</th>
+                            <th class="px-2 py-2 text-center">Act.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recipientsTableBody">
+                        <!-- Recipients will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="recipientModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+            <h2 id="modalTitle" class="text-2xl font-bold mb-4">Add Recipient</h2>
+            <form id="recipientForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">ID (4 digits) *</label>
+                        <input type="text" id="recipientId" required maxlength="4" pattern="\d{4}" placeholder="e.g. 0001" class="w-full px-4 py-2 border rounded-lg font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Name *</label>
+                        <input type="text" id="recipientName" required class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Type *</label>
+                        <select id="recipientType" required class="w-full px-4 py-2 border rounded-lg">
+                            <option value="">Select Type</option>
+                            <option value="Family">Family</option>
+                            <option value="Single">Single</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Currency *</label>
+                        <select id="recipientCurrency" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="INR">INR (₹)</option>
+                            <option value="CHF">CHF</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Monthly Amount *</label>
+                        <input type="number" id="recipientAmount" required class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Swiss Account Holder *</label>
+                        <input type="text" id="recipientSwissAccount" required placeholder="Friend's name" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Team *</label>
+                        <input type="text" id="recipientTeam" required placeholder="e.g., Coimbatore, Salem" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Account Holder Name *</label>
+                        <input type="text" id="recipientAccountName" required placeholder="Account holder name" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Account Number *</label>
+                        <input type="text" id="recipientAccountNumber" required placeholder="Account number" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">IFSC Code</label>
+                        <input type="text" id="recipientIFSC" placeholder="e.g., SBIN003065" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">UPI ID</label>
+                        <input type="text" id="recipientUPI" placeholder="e.g., name@upi" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Notes (optional)</label>
+                    <textarea id="recipientNotes" rows="3" class="w-full px-4 py-2 border rounded-lg" placeholder="Any additional information..."></textarea>
+                </div>
+                <div class="flex gap-3 justify-end pt-4">
+                    <button type="button" id="cancelBtn" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBq6u09yrCy_2QZJXpuh-RKWo0_5wXsTag",
+            authDomain: "hope-association-loans.firebaseapp.com",
+            projectId: "hope-association-loans",
+            storageBucket: "hope-association-loans.firebasestorage.app",
+            messagingSenderId: "432884261468",
+            appId: "1:432884261468:web:d92185f8bce4f550c17c99"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let recipients = [];
+        let editingId = null;
+        
+        // Simple user check - assume admin if no role set
+        let currentUser = {
+            email: 'admin@hope.org',
+            role: 'admin',
+            name: 'Admin'
+        };
+
+        // Wait for DOM to be ready, then load recipients
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadRecipients);
+        } else {
+            loadRecipients();
+        }
+
+        // Load recipients
+        async function loadRecipients() {
+            console.log('Loading recipients...');
+            try {
+                const snapshot = await getDocs(collection(db, 'support_recipients'));
+                recipients = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                console.log('Loaded recipients:', recipients);
+                await autoAssignIds();
+                updateStats();
+                renderRecipients();
+                populateTeamFilter();
+            } catch (error) {
+                console.error('Error loading recipients:', error);
+                alert('Error loading recipients: ' + error.message);
+            }
+        }
+
+        // Auto-assign IDs to recipients that don't have one
+        async function autoAssignIds() {
+            const withoutId = recipients.filter(r => !r.recipient_id);
+            if (withoutId.length === 0) return;
+            
+            // Find highest existing ID
+            const existingIds = recipients.map(r => parseInt(r.recipient_id) || 0);
+            let nextId = Math.max(0, ...existingIds) + 1;
+            
+            // Sort by name for consistent ordering
+            withoutId.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            
+            console.log(`Assigning IDs to ${withoutId.length} recipients starting from ${nextId}...`);
+            
+            for (const r of withoutId) {
+                const newId = String(nextId).padStart(4, '0');
+                try {
+                    await updateDoc(doc(db, 'support_recipients', r.id), { recipient_id: newId });
+                    r.recipient_id = newId;
+                    console.log(`✅ Assigned ID ${newId} to ${r.name}`);
+                    nextId++;
+                } catch (e) {
+                    console.error(`Error assigning ID to ${r.name}:`, e);
+                }
+            }
+        }
+
+        // Real-time listener
+        onSnapshot(collection(db, 'support_recipients'), (snapshot) => {
+            recipients = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+            updateStats();
+            renderRecipients();
+            populateTeamFilter();
+        });
+
+        // Update stats
+        function updateStats() {
+            const families = recipients.filter(r => r.type === 'Family').length;
+            const singles = recipients.filter(r => r.type === 'Single').length;
+            const monthlyINR = recipients.filter(r => (r.currency || 'INR') === 'INR').reduce((sum, r) => sum + (r.monthly_amount || 0), 0);
+            const monthlyCHF = recipients.filter(r => r.currency === 'CHF').reduce((sum, r) => sum + (r.monthly_amount || 0), 0);
+
+            document.getElementById('totalRecipients').textContent = recipients.length;
+            document.getElementById('totalFamilies').textContent = families;
+            document.getElementById('totalSingles').textContent = singles;
+            document.getElementById('monthlyTotalINR').textContent = '₹' + monthlyINR.toLocaleString('en-IN');
+            document.getElementById('monthlyTotalCHF').textContent = 'CHF ' + monthlyCHF.toLocaleString('en-IN');
+        }
+
+        // Populate team filter
+        function populateTeamFilter() {
+            const teams = new Set(recipients.map(r => r.team).filter(Boolean));
+            const filterTeam = document.getElementById('filterTeam');
+            const currentTeam = filterTeam.value;
+            filterTeam.innerHTML = '<option value="">All Teams</option>';
+            Array.from(teams).sort().forEach(team => {
+                filterTeam.innerHTML += `<option value="${team}">${team}</option>`;
+            });
+            filterTeam.value = currentTeam;
+
+            const accounts = new Set(recipients.map(r => r.swiss_account_holder).filter(Boolean));
+            const filterSwiss = document.getElementById('filterSwissAccount');
+            const currentSwiss = filterSwiss.value;
+            filterSwiss.innerHTML = '<option value="">All Swiss Accounts</option>';
+            Array.from(accounts).sort().forEach(acc => {
+                filterSwiss.innerHTML += `<option value="${acc}">${acc}</option>`;
+            });
+            filterSwiss.value = currentSwiss;
+        }
+
+        // Render recipients
+        function renderRecipients() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filterType = document.getElementById('filterType').value;
+            const filterTeam = document.getElementById('filterTeam').value;
+            const filterSwiss = document.getElementById('filterSwissAccount').value;
+
+            let filtered = recipients.filter(r => {
+                if (searchTerm && !r.name.toLowerCase().includes(searchTerm)) return false;
+                if (filterType && r.type !== filterType) return false;
+                if (filterTeam && r.team !== filterTeam) return false;
+                if (filterSwiss && r.swiss_account_holder !== filterSwiss) return false;
+                return true;
+            });
+
+            filtered.sort((a, b) => (a.recipient_id || '9999').localeCompare(b.recipient_id || '9999'));
+
+            const tbody = document.getElementById('recipientsTableBody');
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="px-2 py-6 text-center text-gray-500">No recipients found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(r => {
+                const cur = r.currency || 'INR';
+                const sym = cur === 'CHF' ? 'CHF ' : '₹';
+                
+                // Build bank details display
+                let bankHtml = '';
+                if (r.account_name || r.account_number || r.ifsc || r.upi) {
+                    if (r.account_name) bankHtml += `<div class="font-semibold">${r.account_name}</div>`;
+                    if (r.account_number) bankHtml += `<div><span class="text-gray-400">A/C:</span> ${r.account_number}</div>`;
+                    if (r.ifsc) bankHtml += `<div><span class="text-gray-400">IFSC:</span> ${r.ifsc}</div>`;
+                    if (r.upi) bankHtml += `<div class="text-indigo-600"><span class="text-gray-400">UPI:</span> ${r.upi}</div>`;
+                } else if (r.bank_account) {
+                    bankHtml = `<div>${r.bank_account}</div>`;
+                } else {
+                    bankHtml = '<span class="text-gray-400">-</span>';
+                }
+
+                return `
+                <tr class="border-b hover:bg-gray-50 text-xs">
+                    <td class="px-2 py-2 font-mono font-bold text-indigo-600">${r.recipient_id || '-'}</td>
+                    <td class="px-2 py-2 font-semibold">${r.name || 'N/A'}</td>
+                    <td class="px-2 py-2">
+                        <span class="px-1.5 py-0.5 rounded-full text-xs font-semibold ${r.type === 'Family' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}">
+                            ${r.type || 'N/A'}
+                        </span>
+                    </td>
+                    <td class="px-2 py-2 font-semibold text-indigo-600">${sym}${(r.monthly_amount || 0).toLocaleString('en-IN')}</td>
+                    <td class="px-2 py-2">${r.swiss_account_holder || '-'}</td>
+                    <td class="px-2 py-2">${r.team || '-'}</td>
+                    <td class="px-2 py-2">${bankHtml}</td>
+                    <td class="px-2 py-2 text-gray-600 max-w-[120px] truncate" title="${(r.notes || '').replace(/"/g, '&quot;')}">${r.notes || '-'}</td>
+                    <td class="px-2 py-2 text-center whitespace-nowrap">
+                        ${currentUser.role === 'admin' ? `
+                            <button onclick="editRecipient('${r.id}')" class="text-yellow-600 hover:text-yellow-800">✏️</button>
+                            <button onclick="deleteRecipient('${r.id}', '${r.name}')" class="text-red-600 hover:text-red-800">🗑️</button>
+                        ` : '-'}
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        // Modal functions
+        document.getElementById('addRecipientBtn').onclick = () => {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Add Recipient';
+            document.getElementById('recipientForm').reset();
+            // Auto-generate next ID
+            const existingIds = recipients.map(r => parseInt(r.recipient_id) || 0);
+            const nextId = String(Math.max(0, ...existingIds) + 1).padStart(4, '0');
+            document.getElementById('recipientId').value = nextId;
+            document.getElementById('recipientModal').classList.remove('hidden');
+        };
+
+        document.getElementById('cancelBtn').onclick = () => {
+            document.getElementById('recipientModal').classList.add('hidden');
+        };
+
+        // Edit recipient
+        window.editRecipient = function(id) {
+            if (currentUser.role !== 'admin') return;
+            
+            editingId = id;
+            const r = recipients.find(r => r.id === id);
+            
+            document.getElementById('modalTitle').textContent = 'Edit Recipient';
+            document.getElementById('recipientId').value = r.recipient_id || '';
+            document.getElementById('recipientName').value = r.name;
+            document.getElementById('recipientType').value = r.type;
+            document.getElementById('recipientCurrency').value = r.currency || 'INR';
+            document.getElementById('recipientAmount').value = r.monthly_amount;
+            document.getElementById('recipientSwissAccount').value = r.swiss_account_holder;
+            document.getElementById('recipientTeam').value = r.team;
+            document.getElementById('recipientAccountName').value = r.account_name || '';
+            document.getElementById('recipientAccountNumber').value = r.account_number || '';
+            document.getElementById('recipientIFSC').value = r.ifsc || '';
+            document.getElementById('recipientUPI').value = r.upi || '';
+            // Backwards compat: if old bank_account field exists and no new fields, put it in account number
+            if (r.bank_account && !r.account_number) {
+                document.getElementById('recipientAccountNumber').value = r.bank_account;
+            }
+            document.getElementById('recipientNotes').value = r.notes || '';
+            
+            document.getElementById('recipientModal').classList.remove('hidden');
+        };
+
+        // Delete recipient
+        window.deleteRecipient = async function(id, name) {
+            if (currentUser.role !== 'admin') return;
+            
+            if (!confirm(`Are you sure you want to delete ${name} from the support list?`)) return;
+            
+            try {
+                await deleteDoc(doc(db, 'support_recipients', id));
+                alert('Recipient deleted successfully!');
+            } catch (error) {
+                console.error('Error deleting recipient:', error);
+                alert('Error deleting recipient. Please try again.');
+            }
+        };
+
+        // Form submit
+        document.getElementById('recipientForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const recipientData = {
+                recipient_id: document.getElementById('recipientId').value.trim(),
+                name: document.getElementById('recipientName').value.trim(),
+                type: document.getElementById('recipientType').value,
+                currency: document.getElementById('recipientCurrency').value,
+                monthly_amount: parseFloat(document.getElementById('recipientAmount').value),
+                swiss_account_holder: document.getElementById('recipientSwissAccount').value.trim(),
+                team: document.getElementById('recipientTeam').value.trim(),
+                account_name: document.getElementById('recipientAccountName').value.trim(),
+                account_number: document.getElementById('recipientAccountNumber').value.trim(),
+                ifsc: document.getElementById('recipientIFSC').value.trim(),
+                upi: document.getElementById('recipientUPI').value.trim(),
+                notes: document.getElementById('recipientNotes').value.trim(),
+                updated_at: new Date().toISOString(),
+                updated_by: currentUser.email
+            };
+
+            try {
+                if (editingId) {
+                    await updateDoc(doc(db, 'support_recipients', editingId), recipientData);
+                    alert('Recipient updated successfully!');
+                } else {
+                    recipientData.created_at = new Date().toISOString();
+                    recipientData.created_by = currentUser.email;
+                    await addDoc(collection(db, 'support_recipients'), recipientData);
+                    alert('Recipient added successfully!');
+                }
+                
+                document.getElementById('recipientModal').classList.add('hidden');
+            } catch (error) {
+                console.error('Error saving recipient:', error);
+                alert('Error saving recipient. Please try again.');
+            }
+        };
+
+        // Search and filter
+        document.getElementById('searchInput').oninput = renderRecipients;
+        document.getElementById('filterType').onchange = renderRecipients;
+        document.getElementById('filterTeam').onchange = renderRecipients;
+        document.getElementById('filterSwissAccount').onchange = renderRecipients;
+
+        // Export to CSV
+        document.getElementById('exportBtn').onclick = () => {
+            let csv = 'ID,Name,Type,Currency,Monthly Amount,Swiss Account Holder,Team,Account Holder,Account Number,IFSC,UPI,Notes\n';
+            
+            recipients.forEach(r => {
+                csv += `"${r.recipient_id || ''}","${r.name}","${r.type}","${r.currency || 'INR'}",${r.monthly_amount},"${r.swiss_account_holder}","${r.team}","${r.account_name || ''}","${r.account_number || r.bank_account || ''}","${r.ifsc || ''}","${r.upi || ''}","${r.notes || ''}"\n`;
+            });
+            
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csv], {type: 'text/csv;charset=utf-8;'});
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Support_Recipients_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        };
+    </script>
+</body>
+</html>
