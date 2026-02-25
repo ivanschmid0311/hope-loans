@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hope Grants – Dossier-Verwaltung</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#f5f3ef;--sf:#fff;--sa:#faf8f5;--bd:#e8e4de;--bs:#d4cfc7;--tx:#2c2825;--mu:#8a8279;
+        --ac:#c45d3e;--ah:#a8462a;--al:#fef0ec;--gn:#4a7c59;--gl:#eef5f0;--bl:#3d6b8e;--bll:#ebf2f7;
+        --pu:#6b5b8a;--pl:#f2eff7;--yl:#b8860b;--yll:#fdf6e3;--rd:#c44d3e;--rl:#fef0ec;--sb:#2c2825;--st:#d4cfc7}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+        .app{display:flex;min-height:100vh}
+        /* Sidebar */
+        .sb{width:250px;background:var(--sb);color:var(--st);position:fixed;height:100vh;display:flex;flex-direction:column;z-index:30}
+        .sb-h{padding:20px;border-bottom:1px solid rgba(255,255,255,.08)}
+        .sb-logo{font-family:'DM Serif Display',serif;font-size:20px;color:#fff}
+        .sb-sub{font-size:11px;opacity:.5;margin-top:2px}
+        .sb-nav{flex:1;padding:12px 10px;overflow-y:auto}
+        .sb-sec{margin-bottom:16px}
+        .sb-sec-t{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;opacity:.35;padding:0 10px;margin-bottom:6px}
+        .ni{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--st);transition:.15s}
+        .ni:hover{background:rgba(255,255,255,.06);color:#fff}.ni.active{background:var(--ac);color:#fff}
+        .ni .ic{font-size:16px;width:22px;text-align:center}
+        .badge{display:inline-flex;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600}
+        .nb{margin-left:auto;background:var(--ac);color:#fff;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:600}
+        .sb-f{padding:14px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:12px}
+        .sb-f a{color:var(--st);opacity:.5;text-decoration:none;display:block;margin-top:8px;font-size:11px}
+        /* Main */
+        .main{flex:1;margin-left:250px;padding:28px;max-width:1100px}
+        .ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+        .pt{font-family:'DM Serif Display',serif;font-size:26px}
+        .ps{font-size:13px;color:var(--mu);margin-top:2px}
+        /* Buttons */
+        .btn{display:inline-flex;align-items:center;gap:5px;padding:9px 16px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:.15s;font-family:inherit}
+        .btn-p{background:var(--ac);color:#fff}.btn-p:hover{background:var(--ah)}
+        .btn-s{background:var(--sf);color:var(--tx);border:1px solid var(--bd)}.btn-s:hover{border-color:var(--bs)}
+        .btn-sm{padding:5px 10px;font-size:12px}
+        /* Cards */
+        .card{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:16px;margin-bottom:10px;animation:fadeIn .3s}
+        .card:hover{border-color:var(--bs)}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        /* Status badges */
+        .b-d{background:var(--sa);color:var(--mu);border:1px solid var(--bd)}
+        .b-p{background:var(--yll);color:var(--yl)}.b-s{background:var(--bll);color:var(--bl)}
+        .b-a{background:var(--gl);color:var(--gn)}.b-r{background:var(--rl);color:var(--rd)}
+        .b-q{background:var(--pl);color:var(--pu)}
+        /* Forms */
+        .fg{margin-bottom:14px}.fl{display:block;font-size:12px;font-weight:600;margin-bottom:4px}
+        .fi,.fs,.ft{width:100%;padding:9px 12px;border:1px solid var(--bd);border-radius:7px;font-size:13px;font-family:inherit;background:var(--sf);color:var(--tx)}
+        .fi:focus,.fs:focus,.ft:focus{outline:none;border-color:var(--ac)}
+        .ft{resize:vertical;min-height:60px}
+        .fg2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+        /* Modal */
+        .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;justify-content:center;align-items:flex-start;padding:32px 16px;overflow-y:auto}
+        .mo.active{display:flex}
+        .modal{background:var(--sf);border-radius:14px;width:100%;max-width:620px;box-shadow:0 16px 48px rgba(0,0,0,.12)}
+        .mh{padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+        .mt{font-family:'DM Serif Display',serif;font-size:18px}
+        .mc{cursor:pointer;font-size:18px;color:var(--mu);background:none;border:none}
+        .mb{padding:20px}.mf{padding:14px 20px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px}
+        /* Stats */
+        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:24px}
+        .stat{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:14px;cursor:pointer;transition:.15s}
+        .stat:hover{border-color:var(--ac)}.stat-l{font-size:11px;color:var(--mu);margin-bottom:2px}.stat-v{font-size:22px;font-weight:700}
+        /* Tabs */
+        .tabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:16px}
+        .tab{padding:8px 14px;font-size:13px;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent}
+        .tab:hover{color:var(--tx)}.tab.active{color:var(--ac);border-color:var(--ac);font-weight:600}
+        /* Task */
+        .task{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--bd)}
+        .tcb{width:18px;height:18px;border-radius:4px;border:2px solid var(--bs);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px}
+        .tcb.done{background:var(--gn);border-color:var(--gn);color:#fff}
+        .task.done .tt{text-decoration:line-through;color:var(--mu)}
+        .td{font-size:11px;color:var(--mu);margin-left:auto;white-space:nowrap}
+        .td.over{color:var(--rd);font-weight:600}
+        /* Files */
+        .file{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--bd);border-radius:7px;margin-bottom:6px;transition:.15s}
+        .file:hover{border-color:var(--bs);background:var(--sa)}
+        .fic{font-size:22px;flex-shrink:0}.fn{font-weight:500;font-size:13px}.fm{font-size:11px;color:var(--mu)}
+        /* Upload area */
+        .upload-area{border:2px dashed var(--bd);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.15s;background:var(--sa)}
+        .upload-area:hover,.upload-area.dragover{border-color:var(--ac);background:var(--al)}
+        .upload-area input{display:none}
+        .upload-progress{height:4px;background:var(--bd);border-radius:2px;margin-top:8px;overflow:hidden}
+        .upload-bar{height:100%;background:var(--ac);border-radius:2px;transition:width .3s}
+        /* Views */
+        .view{display:none}.view.active{display:block}
+        .empty{text-align:center;padding:40px 16px;color:var(--mu)}
+        .empty-ic{font-size:40px;margin-bottom:8px}.empty-t{font-size:14px;margin-bottom:12px}
+        /* Search */
+        .search{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--bd);border-radius:7px;font-size:13px;font-family:inherit;background:var(--sf) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%238a8279' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") no-repeat 10px center}
+        /* Detail tabs */
+        .dtabs{display:flex;gap:0;border-bottom:2px solid var(--bd);margin-bottom:16px}
+        .dtab{padding:10px 14px;font-size:13px;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500}
+        .dtab:hover{color:var(--tx)}.dtab.active{color:var(--ac);border-color:var(--ac);font-weight:600}
+        .dtc{display:none}.dtc.active{display:block}
+        /* Chapter editor */
+        .ch{background:var(--sf);border:1px solid var(--bd);border-radius:8px;margin-bottom:8px;overflow:hidden}
+        .ch-h{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--sa);border-bottom:1px solid var(--bd);cursor:pointer}
+        .ch-h:hover{background:var(--bg)}
+        .ch-n{font-size:11px;font-weight:700;color:var(--ac);min-width:20px}
+        .ch-t{font-weight:600;font-size:13px;flex:1}
+        .ch-b{padding:14px;display:none}.ch-b.open{display:block}
+        .ch-b textarea{width:100%;min-height:120px;padding:10px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:13px;line-height:1.6;resize:vertical}
+        .ch-b textarea:focus{outline:none;border-color:var(--ac)}
+        /* Budget table */
+        .bt{width:100%;border-collapse:collapse;font-size:13px}
+        .bt th{text-align:left;padding:8px 10px;background:var(--sa);border-bottom:1px solid var(--bd);font-size:11px;text-transform:uppercase;color:var(--mu)}
+        .bt td{padding:8px 10px;border-bottom:1px solid var(--bd)}
+        .bt input,.bt select{width:100%;padding:6px 8px;border:1px solid var(--bd);border-radius:5px;font-size:13px;font-family:inherit}
+        .bt input:focus,.bt select:focus{outline:none;border-color:var(--ac)}
+        .bt-total{font-weight:700;background:var(--al);color:var(--ac)}
+        /* Responsive */
+        @media(max-width:768px){.sb{display:none}.main{margin-left:0;padding:14px}.fg2,.fg3{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+<div class="app">
+    <aside class="sb">
+        <div class="sb-h">
+            <div class="sb-logo">Hope Grants</div>
+            <div class="sb-sub">Gesuche & Dossier-Verwaltung</div>
+        </div>
+        <nav class="sb-nav">
+            <div class="sb-sec">
+                <div class="sb-sec-t">Übersicht</div>
+                <div class="ni active" data-view="dashboard"><span class="ic">📊</span> Dashboard</div>
+            </div>
+            <div class="sb-sec">
+                <div class="sb-sec-t">Verwaltung</div>
+                <div class="ni" data-view="dossiers"><span class="ic">📁</span> Gesuche / Dossiers <span class="nb" id="pendBadge">0</span></div>
+                <div class="ni" data-view="funders"><span class="ic">🏛️</span> Stiftungen</div>
+                <div class="ni" data-view="projects"><span class="ic">🌍</span> Projekte</div>
+            </div>
+            <div class="sb-sec">
+                <div class="sb-sec-t">Werkzeuge</div>
+                <div class="ni" data-view="tasks"><span class="ic">✅</span> Aufgaben</div>
+                <div class="ni" data-view="files"><span class="ic">📎</span> Alle Dateien</div>
+                <div class="ni" data-view="textblocks"><span class="ic">📝</span> Textbausteine</div>
+            </div>
+        </nav>
+        <div class="sb-f">
+            <div style="color:#fff;font-weight:500">Verein Hope</div>
+            <a href="index.html">← Hope Loans</a>
+        </div>
+    </aside>
+
+    <main class="main">
+        <!-- DASHBOARD -->
+        <div class="view active" id="v-dashboard">
+            <div class="ph"><div><h1 class="pt">Dashboard</h1><p class="ps">Übersicht aller Projektgesuche</p></div>
+                <button class="btn btn-p" onclick="openDossier()">+ Neues Gesuch</button></div>
+            <div class="stats" id="statsGrid"></div>
+            <h3 style="font-size:15px;font-weight:600;margin-bottom:10px">⚡ Nächste Deadlines</h3>
+            <div id="deadlines"></div>
+            <h3 style="font-size:15px;font-weight:600;margin:16px 0 10px">📋 Letzte Gesuche</h3>
+            <div id="recentDossiers"></div>
+        </div>
+
+        <!-- DOSSIERS -->
+        <div class="view" id="v-dossiers">
+            <div class="ph"><div><h1 class="pt">Gesuche / Dossiers</h1><p class="ps">Alle Projektgesuche verwalten</p></div>
+                <button class="btn btn-p" onclick="openDossier()">+ Neues Gesuch</button></div>
+            <input class="search" id="dossierSearch" placeholder="Suchen..." oninput="renderDossiers()">
+            <div class="tabs" id="dTabs" style="margin-top:12px">
+                <div class="tab active" data-f="all">Alle</div>
+                <div class="tab" data-f="Entwurf">Entwurf</div>
+                <div class="tab" data-f="In Arbeit">In Arbeit</div>
+                <div class="tab" data-f="Eingereicht">Eingereicht</div>
+                <div class="tab" data-f="Bewilligt">Bewilligt</div>
+                <div class="tab" data-f="Abgelehnt">Abgelehnt</div>
+                <div class="tab" data-f="Rückfragen">Rückfragen</div>
+            </div>
+            <div id="dossierList"></div>
+        </div>
+
+        <!-- DOSSIER DETAIL -->
+        <div class="view" id="v-detail">
+            <div id="detailContent"></div>
+        </div>
+
+        <!-- FUNDERS -->
+        <div class="view" id="v-funders">
+            <div class="ph"><div><h1 class="pt">Stiftungen</h1><p class="ps">Förderstellen & Kontakte</p></div>
+                <button class="btn btn-p" onclick="openFunder()">+ Neue Stiftung</button></div>
+            <div id="funderList"></div>
+        </div>
+
+        <!-- PROJECTS -->
+        <div class="view" id="v-projects">
+            <div class="ph"><div><h1 class="pt">Projekte</h1><p class="ps">Projekte verwalten</p></div>
+                <button class="btn btn-p" onclick="openProject()">+ Neues Projekt</button></div>
+            <div id="projectList"></div>
+        </div>
+
+        <!-- TASKS -->
+        <div class="view" id="v-tasks">
+            <div class="ph"><div><h1 class="pt">Aufgaben</h1><p class="ps">Pendenzen & Deadlines</p></div>
+                <button class="btn btn-p" onclick="openTask()">+ Neue Aufgabe</button></div>
+            <div class="tabs" id="tTabs">
+                <div class="tab active" data-f="open">Offen</div>
+                <div class="tab" data-f="done">Erledigt</div>
+                <div class="tab" data-f="all">Alle</div>
+            </div>
+            <div id="taskList"></div>
+        </div>
+
+        <!-- ALL FILES -->
+        <div class="view" id="v-files">
+            <div class="ph"><div><h1 class="pt">Alle Dateien</h1><p class="ps">Zentrale Dokumentenablage</p></div></div>
+            <div id="allFilesList"></div>
+        </div>
+
+        <!-- TEXTBLOCKS -->
+        <div class="view" id="v-textblocks">
+            <div class="ph"><div><h1 class="pt">Textbausteine</h1><p class="ps">Wiederverwendbare Textmodule</p></div>
+                <button class="btn btn-p" onclick="openTb()">+ Neuer Baustein</button></div>
+            <input class="search" id="tbSearch" placeholder="Suchen..." oninput="renderTbs()">
+            <div id="tbList" style="margin-top:12px"></div>
+        </div>
+    </main>
+</div>
+
+<!-- MODALS -->
+<!-- Dossier Modal -->
+<div class="mo" id="moDossier">
+    <div class="modal" style="max-width:660px">
+        <div class="mh"><h2 class="mt" id="moDossierT">Neues Gesuch</h2><button class="mc" onclick="cm('moDossier')">✕</button></div>
+        <div class="mb">
+            <div class="fg"><label class="fl">Titel des Gesuchs *</label><input id="dTitle" class="fi" placeholder="z.B. Schulbau Kathmandu Phase 2 – Antrag Mercator"></div>
+            <div class="fg2">
+                <div class="fg"><label class="fl">Projekt</label><select id="dProject" class="fs"></select></div>
+                <div class="fg"><label class="fl">Stiftung</label><select id="dFunder" class="fs"></select></div>
+            </div>
+            <div class="fg3">
+                <div class="fg"><label class="fl">Betrag (CHF)</label><input type="number" id="dAmount" class="fi"></div>
+                <div class="fg"><label class="fl">Deadline</label><input type="date" id="dDeadline" class="fi"></div>
+                <div class="fg"><label class="fl">Status</label>
+                    <select id="dStatus" class="fs"><option>Entwurf</option><option>In Arbeit</option><option>Eingereicht</option><option>Rückfragen</option><option>Bewilligt</option><option>Abgelehnt</option></select></div>
+            </div>
+            <div class="fg"><label class="fl">Beschreibung / Zusammenfassung</label><textarea id="dDesc" class="ft" rows="3"></textarea></div>
+            <div class="fg"><label class="fl">Notizen (intern)</label><textarea id="dNotes" class="ft" rows="2"></textarea></div>
+        </div>
+        <div class="mf"><button class="btn btn-s" onclick="cm('moDossier')">Abbrechen</button><button class="btn btn-p" onclick="saveDossier()">Speichern</button></div>
+    </div>
+</div>
+
+<!-- Funder Modal -->
+<div class="mo" id="moFunder">
+    <div class="modal">
+        <div class="mh"><h2 class="mt" id="moFunderT">Neue Stiftung</h2><button class="mc" onclick="cm('moFunder')">✕</button></div>
+        <div class="mb">
+            <div class="fg"><label class="fl">Name *</label><input id="fName" class="fi"></div>
+            <div class="fg2">
+                <div class="fg"><label class="fl">Kontaktperson</label><input id="fContact" class="fi"></div>
+                <div class="fg"><label class="fl">E-Mail</label><input id="fEmail" class="fi"></div>
+            </div>
+            <div class="fg"><label class="fl">Website</label><input id="fWeb" class="fi" placeholder="https://..."></div>
+            <div class="fg"><label class="fl">Förderschwerpunkte</label><textarea id="fFocus" class="ft" rows="2"></textarea></div>
+            <div class="fg"><label class="fl">Notizen</label><textarea id="fNotes" class="ft" rows="2"></textarea></div>
+        </div>
+        <div class="mf"><button class="btn btn-s" onclick="cm('moFunder')">Abbrechen</button><button class="btn btn-p" onclick="saveFunder()">Speichern</button></div>
+    </div>
+</div>
+
+<!-- Project Modal -->
+<div class="mo" id="moProject">
+    <div class="modal">
+        <div class="mh"><h2 class="mt" id="moProjectT">Neues Projekt</h2><button class="mc" onclick="cm('moProject')">✕</button></div>
+        <div class="mb">
+            <div class="fg"><label class="fl">Projektname *</label><input id="pName" class="fi"></div>
+            <div class="fg2">
+                <div class="fg"><label class="fl">Land / Region</label><input id="pRegion" class="fi"></div>
+                <div class="fg"><label class="fl">Budget (CHF)</label><input type="number" id="pBudget" class="fi"></div>
+            </div>
+            <div class="fg"><label class="fl">Beschreibung</label><textarea id="pDesc" class="ft" rows="2"></textarea></div>
+        </div>
+        <div class="mf"><button class="btn btn-s" onclick="cm('moProject')">Abbrechen</button><button class="btn btn-p" onclick="saveProject()">Speichern</button></div>
+    </div>
+</div>
+
+<!-- Task Modal -->
+<div class="mo" id="moTask">
+    <div class="modal">
+        <div class="mh"><h2 class="mt">Neue Aufgabe</h2><button class="mc" onclick="cm('moTask')">✕</button></div>
+        <div class="mb">
+            <div class="fg"><label class="fl">Aufgabe *</label><input id="tTitle" class="fi"></div>
+            <div class="fg2">
+                <div class="fg"><label class="fl">Fällig am</label><input type="date" id="tDue" class="fi"></div>
+                <div class="fg"><label class="fl">Gesuch</label><select id="tDossier" class="fs"></select></div>
+            </div>
+            <div class="fg"><label class="fl">Notizen</label><textarea id="tNotes" class="ft" rows="2"></textarea></div>
+        </div>
+        <div class="mf"><button class="btn btn-s" onclick="cm('moTask')">Abbrechen</button><button class="btn btn-p" onclick="saveTask()">Speichern</button></div>
+    </div>
+</div>
+
+<!-- Textblock Modal -->
+<div class="mo" id="moTb">
+    <div class="modal">
+        <div class="mh"><h2 class="mt" id="moTbT">Neuer Textbaustein</h2><button class="mc" onclick="cm('moTb')">✕</button></div>
+        <div class="mb">
+            <div class="fg"><label class="fl">Titel *</label><input id="tbTitle" class="fi"></div>
+            <div class="fg"><label class="fl">Kategorie</label>
+                <select id="tbCat" class="fs"><option>Allgemein</option><option>Verein</option><option>Projekt</option><option>Budget</option><option>Wirkung</option><option>Referenzen</option></select></div>
+            <div class="fg"><label class="fl">Text *</label><textarea id="tbContent" class="ft" rows="8"></textarea></div>
+        </div>
+        <div class="mf"><button class="btn btn-s" onclick="cm('moTb')">Abbrechen</button><button class="btn btn-p" onclick="saveTb()">Speichern</button></div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+    const app = initializeApp({
+        apiKey: "AIzaSyBLgi8KFBjwiSgAikVFelqfsPVLmglGsXk",
+        authDomain: "hope-association-loans.firebaseapp.com",
+        projectId: "hope-association-loans",
+        storageBucket: "hope-association-loans.firebasestorage.app",
+        messagingSenderId: "432884261468",
+        appId: "1:432884261468:web:d92185f8bce4f550c17c99"
+    });
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    let dossiers=[],funders=[],projects=[],tasks=[],files=[],textblocks=[];
+    let editId=null, dFilter='all', tFilter='open';
+
+    const BC = s=>({'Entwurf':'b-d','In Arbeit':'b-p','Eingereicht':'b-s','Bewilligt':'b-a','Abgelehnt':'b-r','Rückfragen':'b-q'}[s]||'b-d');
+    const FI = (name) => {const e=name.split('.').pop().toLowerCase(); return{pdf:'📕',doc:'📄',docx:'📄',xls:'📊',xlsx:'📊',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️'}[e]||'📎';};
+    const FS = (bytes) => bytes<1024?bytes+'B':bytes<1048576?Math.round(bytes/1024)+'KB':Math.round(bytes/1048576*10)/10+'MB';
+    const PN = id=>projects.find(p=>p.id===id)?.name||'–';
+    const FN = id=>funders.find(f=>f.id===id)?.name||'–';
+
+    // Navigation
+    document.querySelectorAll('.ni[data-view]').forEach(el=>{el.onclick=()=>{
+        document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));el.classList.add('active');
+        document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+        document.getElementById('v-'+el.dataset.view).classList.add('active');
+    }});
+
+    // Tab handlers
+    document.getElementById('dTabs').onclick=e=>{if(!e.target.classList.contains('tab'))return;
+        document.querySelectorAll('#dTabs .tab').forEach(t=>t.classList.remove('active'));e.target.classList.add('active');dFilter=e.target.dataset.f;renderDossiers();};
+    document.getElementById('tTabs').onclick=e=>{if(!e.target.classList.contains('tab'))return;
+        document.querySelectorAll('#tTabs .tab').forEach(t=>t.classList.remove('active'));e.target.classList.add('active');tFilter=e.target.dataset.f;renderTasks();};
+
+    window.cm=id=>document.getElementById(id).classList.remove('active');
+    function om(id){document.getElementById(id).classList.add('active')}
+
+    // Load data
+    const load={
+        grant_dossiers:d=>{dossiers=d;renderDossiers();renderDash();popDossierSelects();},
+        grant_funders:d=>{funders=d;renderFunders();popFunderSel();},
+        grant_projects:d=>{projects=d;renderProjects();popProjectSel();},
+        grant_tasks:d=>{tasks=d;renderTasks();renderDash();},
+        grant_files:d=>{files=d;renderAllFiles();},
+        grant_textblocks:d=>{textblocks=d;renderTbs();}
+    };
+    Object.entries(load).forEach(([col,cb])=>{onSnapshot(collection(db,col),snap=>{cb(snap.docs.map(d=>({id:d.id,...d.data()})));});});
+
+    // DASHBOARD
+    function renderDash(){
+        const c={'Entwurf':0,'In Arbeit':0,'Eingereicht':0,'Bewilligt':0,'Abgelehnt':0,'Rückfragen':0};
+        dossiers.forEach(d=>{if(c[d.status]!==undefined)c[d.status]++;});
+        document.getElementById('statsGrid').innerHTML=`
+            <div class="stat" onclick="filterDash('all')"><div class="stat-l">Total</div><div class="stat-v">${dossiers.length}</div></div>
+            <div class="stat" onclick="filterDash('Entwurf')"><div class="stat-l">Entwurf</div><div class="stat-v" style="color:var(--mu)">${c['Entwurf']}</div></div>
+            <div class="stat" onclick="filterDash('In Arbeit')"><div class="stat-l">In Arbeit</div><div class="stat-v" style="color:var(--yl)">${c['In Arbeit']}</div></div>
+            <div class="stat" onclick="filterDash('Eingereicht')"><div class="stat-l">Eingereicht</div><div class="stat-v" style="color:var(--bl)">${c['Eingereicht']}</div></div>
+            <div class="stat" onclick="filterDash('Bewilligt')"><div class="stat-l">Bewilligt</div><div class="stat-v" style="color:var(--gn)">${c['Bewilligt']}</div></div>
+            <div class="stat" onclick="filterDash('Abgelehnt')"><div class="stat-l">Abgelehnt</div><div class="stat-v" style="color:var(--rd)">${c['Abgelehnt']}</div></div>`;
+        document.getElementById('pendBadge').textContent=c['Entwurf']+c['In Arbeit']+c['Rückfragen'];
+
+        // Deadlines
+        const dl=document.getElementById('deadlines');
+        const up=dossiers.filter(d=>d.deadline&&d.status!=='Bewilligt'&&d.status!=='Abgelehnt').sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,5);
+        dl.innerHTML=up.length?up.map(d=>{const days=Math.ceil((new Date(d.deadline)-new Date())/864e5);const cls=days<0?'color:var(--rd);font-weight:600':days<7?'color:var(--yl);font-weight:600':'';
+            return`<div class="card" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="viewDossier('${d.id}')">
+                <div><strong style="font-size:14px">${d.title}</strong><div style="font-size:12px;color:var(--mu)">${PN(d.project_id)} → ${FN(d.funder_id)}</div></div>
+                <div style="text-align:right"><div style="${cls};font-size:13px">${d.deadline}</div><div style="font-size:11px;color:var(--mu)">${days<0?Math.abs(days)+' Tage überfällig':days+' Tage'}</div></div>
+            </div>`;}).join(''):'<div style="color:var(--mu);font-size:13px;padding:8px">Keine Deadlines</div>';
+
+        // Recent
+        const rc=document.getElementById('recentDossiers');
+        const rec=[...dossiers].sort((a,b)=>(b.updated_at||b.created_at||'').localeCompare(a.updated_at||a.created_at||'')).slice(0,5);
+        rc.innerHTML=rec.length?rec.map(d=>dCard(d)).join(''):'<div class="empty"><div class="empty-ic">📁</div><div class="empty-t">Noch keine Gesuche</div><button class="btn btn-p" onclick="openDossier()">Erstes Gesuch anlegen</button></div>';
+    }
+
+    window.filterDash=(f)=>{dFilter=f;document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));document.querySelector('.ni[data-view=dossiers]').classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('v-dossiers').classList.add('active');document.querySelectorAll('#dTabs .tab').forEach(t=>{t.classList.toggle('active',t.dataset.f===f)});renderDossiers();};
+
+    function dCard(d){
+        const fc=files.filter(f=>f.dossier_id===d.id).length;
+        return`<div class="card" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="viewDossier('${d.id}')">
+            <div><div style="display:flex;align-items:center;gap:8px"><strong style="font-size:14px">${d.title}</strong><span class="badge ${BC(d.status)}">${d.status}</span></div>
+            <div style="font-size:12px;color:var(--mu);margin-top:2px">${PN(d.project_id)} → ${FN(d.funder_id)}${d.amount?' · CHF '+Number(d.amount).toLocaleString():''}${fc?' · 📎 '+fc+' Dateien':''}</div></div>
+            <div style="text-align:right;font-size:12px;color:var(--mu)">${d.deadline||''}</div>
+        </div>`;
+    }
+
+    // DOSSIERS LIST
+    function renderDossiers(){
+        const s=(document.getElementById('dossierSearch')?.value||'').toLowerCase();
+        let f=dossiers;
+        if(dFilter!=='all')f=f.filter(d=>d.status===dFilter);
+        if(s)f=f.filter(d=>(d.title||'').toLowerCase().includes(s)||(PN(d.project_id)).toLowerCase().includes(s)||(FN(d.funder_id)).toLowerCase().includes(s));
+        f.sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+        const el=document.getElementById('dossierList');
+        el.innerHTML=f.length?f.map(d=>dCard(d)).join(''):'<div class="empty"><div class="empty-ic">📁</div><div class="empty-t">Keine Gesuche gefunden</div></div>';
+    }
+    window.renderDossiers=renderDossiers;
+
+    // DOSSIER DETAIL with file uploads
+    window.viewDossier=id=>{
+        const d=dossiers.find(x=>x.id===id);if(!d)return;
+        const df=files.filter(f=>f.dossier_id===id);
+        const dt=tasks.filter(t=>t.dossier_id===id);
+        document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+        document.getElementById('v-detail').classList.add('active');
+
+        document.getElementById('detailContent').innerHTML=`
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <button class="btn btn-s btn-sm" onclick="backToList()">← Zurück</button>
+                <div style="display:flex;gap:6px">
+                    <button class="btn btn-s btn-sm" onclick="openDossier('${d.id}')">✏️ Bearbeiten</button>
+                    <button class="btn btn-sm" style="background:var(--rd);color:#fff" onclick="delDossier('${d.id}')">🗑️</button>
+                </div>
+            </div>
+            <div class="card" style="padding:20px;margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                    <div><h2 style="font-family:'DM Serif Display',serif;font-size:22px">${d.title}</h2>
+                    <div style="font-size:13px;color:var(--mu);margin-top:4px">${PN(d.project_id)} → ${FN(d.funder_id)}${d.amount?' · CHF '+Number(d.amount).toLocaleString():''}${d.deadline?' · Deadline: '+d.deadline:''}</div></div>
+                    <span class="badge ${BC(d.status)}" style="font-size:13px;padding:5px 12px">${d.status}</span>
+                </div>
+                ${d.description?'<p style="font-size:13px;color:var(--mu);margin-top:10px">'+d.description+'</p>':''}
+                ${d.notes?'<p style="font-size:12px;color:var(--mu);margin-top:6px;font-style:italic">📝 '+d.notes+'</p>':''}
+            </div>
+
+            <div class="dtabs">
+                <div class="dtab active" data-dt="files">📎 Dateien (${df.length})</div>
+                <div class="dtab" data-dt="tasks">✅ Aufgaben (${dt.length})</div>
+                <div class="dtab" data-dt="chapters">📖 Kapitel</div>
+                <div class="dtab" data-dt="budget">💰 Budget</div>
+            </div>
+
+            <!-- FILES TAB -->
+            <div class="dtc active" id="dt-files">
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" multiple onchange="uploadFiles('${d.id}',this.files)">
+                    <div style="font-size:24px;margin-bottom:6px">📁</div>
+                    <div style="font-size:14px;font-weight:500">Dateien hochladen</div>
+                    <div style="font-size:12px;color:var(--mu);margin-top:4px">Klicken oder Dateien hierhin ziehen (PDF, Word, Excel, Bilder)</div>
+                </div>
+                <div id="uploadStatus" style="margin-top:8px"></div>
+                <div style="margin-top:12px" id="dossierFiles">${renderDossierFiles(df)}</div>
+            </div>
+
+            <!-- TASKS TAB -->
+            <div class="dtc" id="dt-tasks">
+                <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="btn btn-s btn-sm" onclick="openTask('${d.id}')">+ Aufgabe</button></div>
+                ${dt.length?'<div class="card" style="padding:0">'+dt.map(t=>`<div class="task ${t.done?'done':''}">
+                    <div class="tcb ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+                    <span class="tt" style="font-size:13px">${t.title}</span>
+                    ${t.due?`<span class="td">${t.due}</span>`:''}
+                </div>`).join('')+'</div>':'<div style="color:var(--mu);font-size:13px;padding:8px">Keine Aufgaben</div>'}
+            </div>
+
+            <!-- CHAPTERS TAB (optional) -->
+            <div class="dtc" id="dt-chapters">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <div style="font-size:12px;color:var(--mu)">Optional: Kapitel direkt hier bearbeiten</div>
+                    <div style="display:flex;gap:6px">
+                        <button class="btn btn-s btn-sm" onclick="addChapter('${d.id}')">+ Kapitel</button>
+                        <button class="btn btn-s btn-sm" onclick="addDefChapters('${d.id}')">📋 Vorlage</button>
+                    </div>
+                </div>
+                <div id="chapterList">${renderChapters(d.chapters||[],d.id)}</div>
+            </div>
+
+            <!-- BUDGET TAB (optional) -->
+            <div class="dtc" id="dt-budget">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <div style="font-size:12px;color:var(--mu)">Gesamtbudget: <strong style="color:var(--ac)">CHF ${(d.budget||[]).reduce((s,b)=>s+(parseFloat(b.amount)||0),0).toLocaleString()}</strong></div>
+                    <button class="btn btn-s btn-sm" onclick="addBudgetRow('${d.id}')">+ Position</button>
+                </div>
+                <div class="card" style="padding:0;overflow-x:auto">
+                    <table class="bt"><thead><tr><th>#</th><th>Kategorie</th><th>Position</th><th style="width:120px">CHF</th><th style="width:40px"></th></tr></thead>
+                    <tbody id="budgetBody">${renderBudget(d.budget||[],d.id)}</tbody></table>
+                </div>
+            </div>`;
+
+        // Wire detail tabs
+        const dc=document.getElementById('detailContent');
+        dc.querySelectorAll('.dtab').forEach(tab=>{tab.onclick=()=>{
+            dc.querySelectorAll('.dtab').forEach(t=>t.classList.remove('active'));dc.querySelectorAll('.dtc').forEach(c=>c.classList.remove('active'));
+            tab.classList.add('active');document.getElementById('dt-'+tab.dataset.dt).classList.add('active');};});
+
+        // Drag & drop on upload area
+        const ua=document.getElementById('uploadArea');
+        ['dragenter','dragover'].forEach(e=>ua.addEventListener(e,ev=>{ev.preventDefault();ua.classList.add('dragover');}));
+        ['dragleave','drop'].forEach(e=>ua.addEventListener(e,ev=>{ev.preventDefault();ua.classList.remove('dragover');}));
+        ua.addEventListener('drop',ev=>{uploadFiles(d.id,ev.dataTransfer.files);});
+    };
+
+    window.backToList=()=>{document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('v-dossiers').classList.add('active');renderDossiers();};
+
+    // FILE UPLOAD
+    window.uploadFiles=async(dossierId,fileList)=>{
+        const statusEl=document.getElementById('uploadStatus');
+        for(const file of fileList){
+            const ts=Date.now();
+            const path=`grants/${dossierId}/${ts}_${file.name}`;
+            const storageRef=ref(storage,path);
+            statusEl.innerHTML=`<div style="font-size:12px;color:var(--mu)">⏳ ${file.name} wird hochgeladen...</div><div class="upload-progress"><div class="upload-bar" id="upBar" style="width:0%"></div></div>`;
+            try{
+                const task=uploadBytesResumable(storageRef,file);
+                await new Promise((resolve,reject)=>{
+                    task.on('state_changed',snap=>{const p=(snap.bytesTransferred/snap.totalBytes)*100;document.getElementById('upBar').style.width=p+'%';},reject,resolve);
+                });
+                const url=await getDownloadURL(storageRef);
+                await addDoc(collection(db,'grant_files'),{dossier_id:dossierId,name:file.name,path,url,size:file.size,type:file.type,created_at:new Date().toISOString()});
+                statusEl.innerHTML=`<div style="font-size:12px;color:var(--gn)">✅ ${file.name} hochgeladen</div>`;
+            }catch(err){
+                console.error('Upload error:',err);
+                statusEl.innerHTML=`<div style="font-size:12px;color:var(--rd)">❌ Fehler: ${err.message}</div>`;
+            }
+        }
+        setTimeout(()=>{statusEl.innerHTML='';viewDossier(dossierId);},1500);
+    };
+
+    function renderDossierFiles(df){
+        if(!df.length)return'<div style="color:var(--mu);font-size:13px;padding:8px">Noch keine Dateien. Lade Gesuch, Budget, Pläne etc. hoch.</div>';
+        return df.sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(f=>`<div class="file">
+            <span class="fic">${FI(f.name)}</span>
+            <div style="flex:1"><div class="fn">${f.name}</div><div class="fm">${FS(f.size||0)} · ${f.created_at?new Date(f.created_at).toLocaleDateString('de-CH'):''}</div></div>
+            <a href="${f.url}" target="_blank" class="btn btn-s btn-sm" style="text-decoration:none">⬇ Öffnen</a>
+            <button class="btn btn-sm" style="color:var(--rd);background:none;border:none" onclick="delFile('${f.id}','${f.path}')">✕</button>
+        </div>`).join('');
+    }
+
+    window.delFile=async(id,path)=>{if(!confirm('Datei löschen?'))return;try{await deleteObject(ref(storage,path));}catch(e){}await deleteDoc(doc(db,'grant_files',id));};
+
+    // ALL FILES
+    function renderAllFiles(){
+        const el=document.getElementById('allFilesList');
+        if(!files.length){el.innerHTML='<div class="empty"><div class="empty-ic">📎</div><div class="empty-t">Keine Dateien hochgeladen</div></div>';return;}
+        const grouped={};
+        files.forEach(f=>{const did=f.dossier_id||'_none';if(!grouped[did])grouped[did]=[];grouped[did].push(f);});
+        el.innerHTML=Object.entries(grouped).map(([did,fls])=>{
+            const d=dossiers.find(x=>x.id===did);
+            return`<div style="margin-bottom:16px"><h4 style="font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${d?d.title:'Ohne Zuordnung'} (${fls.length})</h4>
+            ${fls.map(f=>`<div class="file">
+                <span class="fic">${FI(f.name)}</span>
+                <div style="flex:1"><div class="fn">${f.name}</div><div class="fm">${FS(f.size||0)}</div></div>
+                <a href="${f.url}" target="_blank" class="btn btn-s btn-sm" style="text-decoration:none">⬇</a>
+            </div>`).join('')}</div>`;
+        }).join('');
+    }
+
+    // CHAPTERS (optional, kept from before)
+    function renderChapters(chapters,did){
+        if(!chapters.length)return'<div style="color:var(--mu);font-size:12px;padding:8px">Keine Kapitel. Nutze "Vorlage" oder erstelle Kapitel manuell.</div>';
+        return chapters.map((c,i)=>`<div class="ch">
+            <div class="ch-h" onclick="togCh(${i})"><span class="ch-n">${i+1}.</span><span class="ch-t">${c.title}</span>
+            <button class="btn btn-sm" style="padding:2px 6px;background:none;border:none;color:var(--rd)" onclick="event.stopPropagation();rmCh('${did}',${i})">✕</button></div>
+            <div class="ch-b" id="chb-${i}"><textarea onchange="updCh('${did}',${i},this.value)">${c.content||''}</textarea></div>
+        </div>`).join('');
+    }
+    window.togCh=i=>{const b=document.getElementById('chb-'+i);if(b)b.classList.toggle('open');};
+    window.addChapter=async did=>{const t=prompt('Kapiteltitel:');if(!t)return;const d=dossiers.find(x=>x.id===did);const ch=[...(d?.chapters||[]),{title:t,content:''}];await updateDoc(doc(db,'grant_dossiers',did),{chapters:ch,updated_at:new Date().toISOString()});};
+    window.addDefChapters=async did=>{if(!confirm('Standard-Kapitel hinzufügen?'))return;const d=dossiers.find(x=>x.id===did);const ex=d?.chapters||[];
+        const def=[{title:'Zusammenfassung',content:''},{title:'Ausgangslage',content:''},{title:'Zielsetzung',content:''},{title:'Zielgruppe',content:''},{title:'Massnahmen',content:''},{title:'Wirkung & Nachhaltigkeit',content:''},{title:'Budget & Finanzierung',content:''},{title:'Zeitplan',content:''},{title:'Organisation & Team',content:''},{title:'Monitoring & Evaluation',content:''}];
+        await updateDoc(doc(db,'grant_dossiers',did),{chapters:[...ex,...def.filter(d=>!ex.some(c=>c.title===d.title))],updated_at:new Date().toISOString()});};
+    window.updCh=async(did,i,val)=>{const d=dossiers.find(x=>x.id===did);const ch=[...(d?.chapters||[])];ch[i]={...ch[i],content:val};await updateDoc(doc(db,'grant_dossiers',did),{chapters:ch,updated_at:new Date().toISOString()});};
+    window.rmCh=async(did,i)=>{if(!confirm('Kapitel löschen?'))return;const d=dossiers.find(x=>x.id===did);const ch=[...(d?.chapters||[])];ch.splice(i,1);await updateDoc(doc(db,'grant_dossiers',did),{chapters:ch,updated_at:new Date().toISOString()});};
+
+    // BUDGET (optional)
+    function renderBudget(budget,did){
+        if(!budget.length)return'<tr><td colspan="5" style="text-align:center;color:var(--mu);padding:12px">Keine Budget-Positionen</td></tr>';
+        let total=0;let html=budget.map((b,i)=>{total+=parseFloat(b.amount)||0;return`<tr><td style="color:var(--mu);font-size:11px">${i+1}</td>
+            <td><select onchange="updBudget('${did}',${i},'category',this.value)">${['Personal','Material','Reisen','Infrastruktur','Verwaltung','Sonstiges'].map(c=>`<option${c===b.category?' selected':''}>${c}</option>`).join('')}</select></td>
+            <td><input value="${b.description||''}" onchange="updBudget('${did}',${i},'description',this.value)"></td>
+            <td><input type="number" value="${b.amount||''}" onchange="updBudget('${did}',${i},'amount',this.value)"></td>
+            <td><button class="btn btn-sm" style="color:var(--rd);background:none;border:none;padding:2px" onclick="rmBudget('${did}',${i})">✕</button></td></tr>`;}).join('');
+        html+=`<tr class="bt-total"><td colspan="3" style="text-align:right;font-size:13px">TOTAL</td><td style="font-size:13px">CHF ${total.toLocaleString()}</td><td></td></tr>`;return html;
+    }
+    window.addBudgetRow=async did=>{const d=dossiers.find(x=>x.id===did);const b=[...(d?.budget||[]),{category:'Sonstiges',description:'',amount:0}];await updateDoc(doc(db,'grant_dossiers',did),{budget:b,updated_at:new Date().toISOString()});};
+    window.updBudget=async(did,i,f,v)=>{const d=dossiers.find(x=>x.id===did);const b=[...(d?.budget||[])];b[i]={...b[i],[f]:f==='amount'?parseFloat(v)||0:v};await updateDoc(doc(db,'grant_dossiers',did),{budget:b,updated_at:new Date().toISOString()});};
+    window.rmBudget=async(did,i)=>{const d=dossiers.find(x=>x.id===did);const b=[...(d?.budget||[])];b.splice(i,1);await updateDoc(doc(db,'grant_dossiers',did),{budget:b,updated_at:new Date().toISOString()});};
+
+    // FUNDERS
+    function renderFunders(){const el=document.getElementById('funderList');
+        if(!funders.length){el.innerHTML='<div class="empty"><div class="empty-ic">🏛️</div><div class="empty-t">Noch keine Stiftungen</div><button class="btn btn-p" onclick="openFunder()">Erste Stiftung anlegen</button></div>';return;}
+        el.innerHTML=funders.sort((a,b)=>(a.name||'').localeCompare(b.name)).map(f=>{const ac=dossiers.filter(d=>d.funder_id===f.id).length;
+            return`<div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <div><strong>${f.name}</strong>${f.contact?' <span style="font-size:12px;color:var(--mu)">· '+f.contact+'</span>':''}
+            ${f.focus?'<div style="font-size:12px;color:var(--mu)">'+f.focus+'</div>':''}
+            <div style="font-size:11px;color:var(--ac)">${ac} Gesuche</div></div>
+            <div style="display:flex;gap:4px">${f.website?'<a href="'+f.website+'" target="_blank" class="btn btn-s btn-sm">🌐</a>':''}
+            <button class="btn btn-s btn-sm" onclick="openFunder('${f.id}')">✏️</button>
+            <button class="btn btn-sm" style="color:var(--rd);background:none;border:none" onclick="delFunder('${f.id}')">🗑️</button></div></div>`;}).join('');
+    }
+
+    // PROJECTS
+    function renderProjects(){const el=document.getElementById('projectList');
+        if(!projects.length){el.innerHTML='<div class="empty"><div class="empty-ic">🌍</div><div class="empty-t">Noch keine Projekte</div><button class="btn btn-p" onclick="openProject()">Erstes Projekt anlegen</button></div>';return;}
+        el.innerHTML=projects.sort((a,b)=>(a.name||'').localeCompare(b.name)).map(p=>{const ac=dossiers.filter(d=>d.project_id===p.id).length;
+            return`<div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <div><strong>${p.name}</strong>${p.region?' <span style="font-size:12px;color:var(--mu)">· '+p.region+'</span>':''}
+            ${p.budget?'<div style="font-size:12px;color:var(--mu)">Budget: CHF '+Number(p.budget).toLocaleString()+'</div>':''}
+            <div style="font-size:11px;color:var(--ac)">${ac} Gesuche</div></div>
+            <div style="display:flex;gap:4px"><button class="btn btn-s btn-sm" onclick="openProject('${p.id}')">✏️</button>
+            <button class="btn btn-sm" style="color:var(--rd);background:none;border:none" onclick="delProject('${p.id}')">🗑️</button></div></div>`;}).join('');
+    }
+
+    // TASKS
+    function renderTasks(){let f=tasks;if(tFilter==='open')f=f.filter(t=>!t.done);else if(tFilter==='done')f=f.filter(t=>t.done);
+        f.sort((a,b)=>{if(a.done!==b.done)return a.done?1:-1;return(a.due||'z').localeCompare(b.due||'z');});
+        const el=document.getElementById('taskList');const today=new Date().toISOString().split('T')[0];
+        if(!f.length){el.innerHTML='<div class="empty"><div class="empty-ic">✅</div><div class="empty-t">Keine Aufgaben</div></div>';return;}
+        el.innerHTML='<div class="card" style="padding:0">'+f.map(t=>{const ov=t.due&&t.due<today&&!t.done;const dn=t.dossier_id?dossiers.find(d=>d.id===t.dossier_id)?.title:'';
+            return`<div class="task ${t.done?'done':''}"><div class="tcb ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+            <div style="flex:1"><span class="tt" style="font-size:13px">${t.title}</span>${dn?'<div style="font-size:11px;color:var(--mu)">📁 '+dn+'</div>':''}</div>
+            ${t.due?`<span class="td ${ov?'over':''}">${t.due}</span>`:''}
+            <button class="btn btn-sm" style="color:var(--rd);background:none;border:none;padding:4px" onclick="delTask('${t.id}')">🗑️</button></div>`;}).join('')+'</div>';
+    }
+
+    // TEXTBLOCKS
+    function renderTbs(){const s=(document.getElementById('tbSearch')?.value||'').toLowerCase();let f=textblocks;
+        if(s)f=f.filter(t=>(t.title||'').toLowerCase().includes(s)||(t.content||'').toLowerCase().includes(s));
+        const el=document.getElementById('tbList');
+        if(!f.length){el.innerHTML='<div class="empty"><div class="empty-ic">📝</div><div class="empty-t">Keine Textbausteine</div></div>';return;}
+        el.innerHTML=f.map(t=>`<div class="card" style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="flex:1;min-width:0"><div style="font-size:10px;color:var(--ac);font-weight:600">${t.category||'Allgemein'}</div>
+            <strong style="font-size:14px">${t.title}</strong>
+            <div style="font-size:12px;color:var(--mu);margin-top:4px;max-height:50px;overflow:hidden">${(t.content||'').substring(0,150)}...</div></div>
+            <div style="display:flex;gap:4px;margin-left:12px"><button class="btn btn-s btn-sm" onclick="openTb('${t.id}')">✏️</button>
+            <button class="btn btn-sm" style="color:var(--rd);background:none;border:none" onclick="delTb('${t.id}')">🗑️</button></div></div>`).join('');
+    }
+    window.renderTbs=renderTbs;
+
+    // Populate selects
+    function popProjectSel(){const o='<option value="">– Projekt –</option>'+projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');document.getElementById('dProject').innerHTML=o;}
+    function popFunderSel(){const o='<option value="">– Stiftung –</option>'+funders.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');document.getElementById('dFunder').innerHTML=o;}
+    function popDossierSelects(){const o='<option value="">– Gesuch –</option>'+dossiers.map(d=>`<option value="${d.id}">${d.title}</option>`).join('');document.getElementById('tDossier').innerHTML=o;}
+
+    // OPEN modals
+    window.openDossier=(id)=>{editId=id||null;document.getElementById('moDossierT').textContent=id?'Gesuch bearbeiten':'Neues Gesuch';
+        if(id){const d=dossiers.find(x=>x.id===id);if(!d)return;document.getElementById('dTitle').value=d.title||'';document.getElementById('dProject').value=d.project_id||'';document.getElementById('dFunder').value=d.funder_id||'';document.getElementById('dAmount').value=d.amount||'';document.getElementById('dDeadline').value=d.deadline||'';document.getElementById('dStatus').value=d.status||'Entwurf';document.getElementById('dDesc').value=d.description||'';document.getElementById('dNotes').value=d.notes||'';}
+        else{['dTitle','dAmount','dDeadline','dDesc','dNotes'].forEach(id=>document.getElementById(id).value='');document.getElementById('dStatus').value='Entwurf';}om('moDossier');};
+
+    window.openFunder=(id)=>{editId=id||null;document.getElementById('moFunderT').textContent=id?'Stiftung bearbeiten':'Neue Stiftung';
+        if(id){const f=funders.find(x=>x.id===id);['fName','fContact','fEmail','fWeb','fFocus','fNotes'].forEach((fid,i)=>document.getElementById(fid).value=f?.[['name','contact','email','website','focus','notes'][i]]||'');}
+        else{['fName','fContact','fEmail','fWeb','fFocus','fNotes'].forEach(id=>document.getElementById(id).value='');}om('moFunder');};
+
+    window.openProject=(id)=>{editId=id||null;document.getElementById('moProjectT').textContent=id?'Projekt bearbeiten':'Neues Projekt';
+        if(id){const p=projects.find(x=>x.id===id);document.getElementById('pName').value=p?.name||'';document.getElementById('pRegion').value=p?.region||'';document.getElementById('pBudget').value=p?.budget||'';document.getElementById('pDesc').value=p?.description||'';}
+        else{['pName','pRegion','pBudget','pDesc'].forEach(id=>document.getElementById(id).value='');}om('moProject');};
+
+    window.openTask=(did)=>{['tTitle','tDue','tNotes'].forEach(id=>document.getElementById(id).value='');if(did)document.getElementById('tDossier').value=did;om('moTask');};
+
+    window.openTb=(id)=>{editId=id||null;document.getElementById('moTbT').textContent=id?'Baustein bearbeiten':'Neuer Textbaustein';
+        if(id){const t=textblocks.find(x=>x.id===id);document.getElementById('tbTitle').value=t?.title||'';document.getElementById('tbCat').value=t?.category||'Allgemein';document.getElementById('tbContent').value=t?.content||'';}
+        else{['tbTitle','tbContent'].forEach(id=>document.getElementById(id).value='');document.getElementById('tbCat').value='Allgemein';}om('moTb');};
+
+    // SAVE functions
+    window.saveDossier=async()=>{const title=document.getElementById('dTitle').value.trim();if(!title){alert('Titel erforderlich');return;}
+        const data={title,project_id:document.getElementById('dProject').value,funder_id:document.getElementById('dFunder').value,amount:parseFloat(document.getElementById('dAmount').value)||null,deadline:document.getElementById('dDeadline').value,status:document.getElementById('dStatus').value,description:document.getElementById('dDesc').value.trim(),notes:document.getElementById('dNotes').value.trim(),updated_at:new Date().toISOString()};
+        if(editId){await updateDoc(doc(db,'grant_dossiers',editId),data);}else{data.created_at=new Date().toISOString();await addDoc(collection(db,'grant_dossiers'),data);}cm('moDossier');};
+
+    window.saveFunder=async()=>{const name=document.getElementById('fName').value.trim();if(!name){alert('Name erforderlich');return;}
+        const data={name,contact:document.getElementById('fContact').value.trim(),email:document.getElementById('fEmail').value.trim(),website:document.getElementById('fWeb').value.trim(),focus:document.getElementById('fFocus').value.trim(),notes:document.getElementById('fNotes').value.trim(),updated_at:new Date().toISOString()};
+        if(editId){await updateDoc(doc(db,'grant_funders',editId),data);}else{data.created_at=new Date().toISOString();await addDoc(collection(db,'grant_funders'),data);}cm('moFunder');};
+
+    window.saveProject=async()=>{const name=document.getElementById('pName').value.trim();if(!name){alert('Name erforderlich');return;}
+        const data={name,region:document.getElementById('pRegion').value.trim(),budget:parseFloat(document.getElementById('pBudget').value)||null,description:document.getElementById('pDesc').value.trim(),updated_at:new Date().toISOString()};
+        if(editId){await updateDoc(doc(db,'grant_projects',editId),data);}else{data.created_at=new Date().toISOString();await addDoc(collection(db,'grant_projects'),data);}cm('moProject');};
+
+    window.saveTask=async()=>{const title=document.getElementById('tTitle').value.trim();if(!title){alert('Aufgabe erforderlich');return;}
+        await addDoc(collection(db,'grant_tasks'),{title,due:document.getElementById('tDue').value,dossier_id:document.getElementById('tDossier').value,notes:document.getElementById('tNotes').value.trim(),done:false,created_at:new Date().toISOString()});cm('moTask');};
+
+    window.saveTb=async()=>{const title=document.getElementById('tbTitle').value.trim();const content=document.getElementById('tbContent').value.trim();if(!title||!content){alert('Titel & Text erforderlich');return;}
+        const data={title,category:document.getElementById('tbCat').value,content,updated_at:new Date().toISOString()};
+        if(editId){await updateDoc(doc(db,'grant_textblocks',editId),data);}else{data.created_at=new Date().toISOString();await addDoc(collection(db,'grant_textblocks'),data);}cm('moTb');};
+
+    // Toggle & Delete
+    window.toggleTask=async id=>{const t=tasks.find(x=>x.id===id);if(t)await updateDoc(doc(db,'grant_tasks',id),{done:!t.done});};
+    window.delDossier=async id=>{if(confirm('Gesuch und alle Dateien löschen?')){const df=files.filter(f=>f.dossier_id===id);for(const f of df){try{await deleteObject(ref(storage,f.path));}catch(e){}await deleteDoc(doc(db,'grant_files',f.id));}await deleteDoc(doc(db,'grant_dossiers',id));backToList();}};
+    window.delFunder=async id=>{if(confirm('Stiftung löschen?'))await deleteDoc(doc(db,'grant_funders',id));};
+    window.delProject=async id=>{if(confirm('Projekt löschen?'))await deleteDoc(doc(db,'grant_projects',id));};
+    window.delTask=async id=>{if(confirm('Aufgabe löschen?'))await deleteDoc(doc(db,'grant_tasks',id));};
+    window.delTb=async id=>{if(confirm('Baustein löschen?'))await deleteDoc(doc(db,'grant_textblocks',id));};
+</script>
+</body>
+</html>
