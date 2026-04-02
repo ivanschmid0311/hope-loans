@@ -505,7 +505,7 @@
             // Show Set Opening Balance button only for January 2026
             const btn = document.getElementById('btnSetOpening');
             if (btn) {
-                btn.style.display = (currentMonth.getMonth() === 0 && currentMonth.getFullYear() === 2026) ? '' : 'none';
+                btn.style.display = ((currentMonth.getMonth() === 0 && currentMonth.getFullYear() === 2026) || (currentMonth.getMonth() === 11 && currentMonth.getFullYear() === 2025)) ? '' : 'none';
             }
         }
 
@@ -626,13 +626,13 @@
                     });
 
                     // Use previous month's closing as opening
-                    // Explicit opening balances only apply for January 2026
+                    // Explicit opening balances apply for Dec 2025 and Jan 2026 (program start)
                     const prevClosing = prevBalances[collector.name] || 0;
                     const currentMonthKey = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
                     
-                    if (currentMonthKey === '2026-01' && hasExplicitOpening) {
-                        // January 2026: use the explicit opening balance
-                        console.log(`ℹ️ ${collector.name} explicit opening (Jan 2026): ${openingBalance}`);
+                    if ((currentMonthKey === '2026-01' || currentMonthKey === '2025-12') && hasExplicitOpening) {
+                        // Program start months: use the explicit opening balance
+                        console.log(`ℹ️ ${collector.name} explicit opening: ${openingBalance}`);
                     } else {
                         // All other months: always use previous month's closing
                         openingBalance = prevClosing;
