@@ -766,7 +766,7 @@
                                             <span class="transaction-amount ${t.amount > 0 ? 'positive' : 'negative'}">
                                                 ${t.amount > 0 ? '+' : ''}${cur}${Math.abs(t.amount).toLocaleString('en-IN')}
                                             </span>
-                                            ${t.transaction_type !== 'opening' && (window.balanceUserRole === 'admin' || (window.isFieldCollector && window.balanceUserName === collector.name)) ? `
+                                            ${(t.transaction_type !== 'opening' || (t.month && t.month !== '2025-12')) && (window.balanceUserRole === 'admin' || (window.isFieldCollector && window.balanceUserName === collector.name)) ? `
                                                 <button onclick="editTransaction('${t.id}', '${collector.name}')" style="background: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; border: none; cursor: pointer;" title="Edit">✏️</button>
                                                 <button onclick="deleteTransaction('${t.id}', '${collector.name}')" style="background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; border: none; cursor: pointer;" title="Delete">🗑️</button>
                                             ` : ''}
