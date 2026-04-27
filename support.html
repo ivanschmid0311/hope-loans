@@ -20,7 +20,9 @@
                 </button>
                 <script>
                     const sp = new URLSearchParams(window.location.search);
-                    if (sp.get('role') && sp.get('role') !== 'admin') {
+                    const spName = decodeURIComponent(sp.get('name') || '');
+                    const spEditors = ['Francine'];
+                    if (sp.get('role') && sp.get('role') !== 'admin' && !spEditors.includes(spName)) {
                         document.getElementById('addRecipientBtn').style.display = 'none';
                     }
                 </script>
@@ -169,11 +171,13 @@
         // Read role from URL params
         const supportParams = new URLSearchParams(window.location.search);
         const supportRole = supportParams.get('role') || 'admin';
+        const supportName = decodeURIComponent(supportParams.get('name') || '');
+        const supportEditors = ['Francine']; // Non-admins who can edit support
         
         let currentUser = {
             email: 'admin@hope.org',
-            role: supportRole,
-            name: 'Admin'
+            role: (supportRole === 'admin' || supportEditors.includes(supportName)) ? 'admin' : supportRole,
+            name: supportName || 'Admin'
         };
 
         // Wait for authentication before loading data
