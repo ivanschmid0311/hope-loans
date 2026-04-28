@@ -1882,12 +1882,25 @@
                     loansHtml += commentsHtml;
                     loansHtml += paymentHistory;
                     loansHtml += '<div class="mt-2 flex gap-2 flex-wrap">';
-                    loansHtml += '<button onclick="recordPayment(\'' + l.id + '\')" class="bg-indigo-600 text-white px-4 py-1 rounded text-sm hover:bg-indigo-700">Record Payment</button>';
-                    loansHtml += '<button onclick="forgiveLoan(\'' + l.id + '\')" class="bg-purple-600 text-white px-4 py-1 rounded text-sm hover:bg-purple-700">🕊️ Forgive</button>';
-                    loansHtml += '<button onclick="editLoan(\'' + l.id + '\')" class="bg-yellow-600 text-white px-4 py-1 rounded text-sm hover:bg-yellow-700">✏️ Edit</button>';
-                    if (currentUser.role === 'admin') {
-                        loansHtml += '<button onclick="deleteLoan(\'' + l.id + '\')" class="bg-red-600 text-white px-4 py-1 rounded text-sm hover:bg-red-700">🗑️ Delete</button>';
+                    
+                    const isPaidInFull = s.remaining <= 0;
+                    
+                    if (isPaidInFull) {
+                        loansHtml += '<button disabled class="bg-gray-300 text-gray-500 px-4 py-1 rounded text-sm cursor-not-allowed">Record Payment</button>';
+                        loansHtml += '<button disabled class="bg-gray-300 text-gray-500 px-4 py-1 rounded text-sm cursor-not-allowed">🕊️ Forgive</button>';
+                        loansHtml += '<button onclick="editPaidLoan(\'' + l.id + '\')" class="bg-yellow-600 text-white px-4 py-1 rounded text-sm hover:bg-yellow-700">✏️ Edit</button>';
+                        if (currentUser.role === 'admin') {
+                            loansHtml += '<button disabled class="bg-gray-300 text-gray-500 px-4 py-1 rounded text-sm cursor-not-allowed">🗑️ Delete</button>';
+                        }
+                    } else {
+                        loansHtml += '<button onclick="recordPayment(\'' + l.id + '\')" class="bg-indigo-600 text-white px-4 py-1 rounded text-sm hover:bg-indigo-700">Record Payment</button>';
+                        loansHtml += '<button onclick="forgiveLoan(\'' + l.id + '\')" class="bg-purple-600 text-white px-4 py-1 rounded text-sm hover:bg-purple-700">🕊️ Forgive</button>';
+                        loansHtml += '<button onclick="editLoan(\'' + l.id + '\')" class="bg-yellow-600 text-white px-4 py-1 rounded text-sm hover:bg-yellow-700">✏️ Edit</button>';
+                        if (currentUser.role === 'admin') {
+                            loansHtml += '<button onclick="deleteLoan(\'' + l.id + '\')" class="bg-red-600 text-white px-4 py-1 rounded text-sm hover:bg-red-700">🗑️ Delete</button>';
+                        }
                     }
+                    
                     loansHtml += '</div>';
                     loansHtml += '</div>';
                 });
@@ -2230,6 +2243,15 @@
         }
 
         // Edit Loan Function
+        function editPaidLoan(loanId) {
+            const loan = loans.find(l => l.id === loanId);
+            if (!loan) return;
+            const choice = confirm('⚠️ This loan is PAID IN FULL.\n\n' + loan.borrower_name + '\n\nDo you want to edit it?\n\nOK = Edit loan details\nCancel = Go back');
+            if (choice) {
+                editLoan(loanId);
+            }
+        }
+
         async function editLoan(loanId) {
             const loan = loans.find(l => l.id === loanId);
             if (!loan) return;
@@ -3313,6 +3335,7 @@
         window.editPayment = editPayment;
         window.deletePayment = deletePayment;
         window.editLoan = editLoan;
+        window.editPaidLoan = editPaidLoan;
         window.deleteLoan = deleteLoan;
         window.backupAllData = backupAllData;
         window.restoreFromBackup = restoreFromBackup;
