@@ -1323,18 +1323,12 @@
             const remaining = loan.amount - s;
             const sym = loan.currency === 'CHF' ? 'CHF ' : loan.currency === 'MXN' ? 'MXN $' : '₹';
             
-            const reason = prompt(
-                `🕊️ Forgive Loan\n\n` +
-                `${loan.borrower_name} — ${loan.purpose}\n` +
-                `Remaining: ${sym}${remaining.toLocaleString('en-IN')}\n\n` +
-                `How much to forgive? (Empty = full remaining amount)\n` +
-                `Reason for forgiveness:`
-            );
-            if (reason === null) return;
-            
-            const amountStr = prompt(`Amount to forgive (${sym}${remaining.toLocaleString('en-IN')} = full remaining):`, remaining);
+            const amountStr = prompt(`🕊️ Forgive Loan\n\n${loan.borrower_name} — ${loan.purpose}\nRemaining: ${sym}${remaining.toLocaleString('en-IN')}\n\nAmount to forgive (leave empty = full remaining):`, remaining);
             if (amountStr === null) return;
             const amount = parseFloat(amountStr) || remaining;
+            
+            const reason = prompt(`Reason for forgiveness (required):`, '');
+            if (reason === null) return;
             
             if (!confirm(`${loan.borrower_name}: Forgive ${sym}${amount.toLocaleString('en-IN')}?\n\nReason: ${reason || 'No reason given'}\n\nThis payment will NOT be imported into the balance.`)) return;
             
@@ -1467,7 +1461,8 @@
                         payment_currency: currency,
                         date: paymentDate,
                         comment: document.getElementById('modalPayComment').value.trim(),
-                        recorded_at: new Date().toISOString()
+                        recorded_at: new Date().toISOString(),
+                        entered_by: currentUser ? currentUser.name : ''
                     };
                     
                     try {
@@ -1525,7 +1520,8 @@
                                         payment_currency: currency,
                                         date: payDate,
                                         comment: (comment || 'Auto') + ' (' + monthNames[um.month] + ' ' + um.year + ')',
-                                        recorded_at: new Date().toISOString()
+                                        recorded_at: new Date().toISOString(),
+                                        entered_by: currentUser ? currentUser.name : ''
                                     });
                                     remaining -= payAmt;
                                 }
@@ -1705,11 +1701,11 @@
                     if (l.collector !== 'Irina') return false;
                 }
                 
-                if (searchTerm && !l.borrower_name.toLowerCase().includes(searchTerm)) return false;
+                if (searchTerm && !l.borrower_name.toLowerCase().includes(searchTerm) && !(l.loan_giver || '').toLowerCase().includes(searchTerm)) return false;
                 if (filterYear && new Date(l.date).getFullYear().toString() !== filterYear) return false;
                 if (filterCollector && l.collector !== filterCollector) return false;
                 if (filterPurpose && l.purpose !== filterPurpose) return false;
-                if (filterLoanGiver && (l.loan_giver || '').trim().toLowerCase() !== filterLoanGiver) return false;
+                if (filterLoanGiver && !(l.loan_giver || '').trim().toLowerCase().includes(filterLoanGiver)) return false;
                 if (filterCurrency && l.currency !== filterCurrency) return false;
                 
                 // Filter by status
@@ -1768,6 +1764,7 @@
                     let paymentHistory = '';
                     
                     if (loanPayments.length > 0) {
+                        const initialsMap = {'Ivan':'IV','Oli':'OLI','Oliver':'OLI','Suresh':'SU','Edward':'ED','Samuel':'SAM','Irina':'IRI','Isaac':'ISA','Ida':'IDA','Katharina':'KAT','Francine':'FRA','Michael':'MIC'};
                         paymentHistory = '<div class="mt-2 text-xs bg-gray-100 p-2 rounded"><strong>Payment History:</strong><br>';
                         loanPayments.forEach(p => {
                             console.log('💵 Displaying payment:', p);
@@ -1790,7 +1787,10 @@
                             }
                             
                             paymentHistory += '<div class="flex justify-between items-center mb-1 p-1 hover:bg-gray-200 rounded">';
-                            paymentHistory += '<span>' + p.date + ': ' + paymentDisplay + paymentType;
+                            const enteredBy = p.entered_by || p.recorded_by || '';
+                            const initials = initialsMap[enteredBy] || (enteredBy ? enteredBy.substring(0,3).toUpperCase() : '');
+                            const initialsTag = initials ? ' <span style="background:#e0e7ff;color:#3730a3;border-radius:3px;padding:0 3px;font-weight:700;font-size:10px">' + initials + '</span>' : '';
+                            paymentHistory += '<span>' + p.date + ': ' + paymentDisplay + paymentType + initialsTag;
                             if (p.comment) paymentHistory += ' <em style="color:#6b7280">(' + p.comment + ')</em>';
                             if (p.is_forgiven) paymentHistory += ' <span style="color:#9333ea;font-weight:600">🕊️ Forgiven</span>';
                             paymentHistory += '</span>';
@@ -1875,7 +1875,9 @@
 
                     loansHtml += '<div class="bg-gray-50 p-3 rounded border-l-4 border-indigo-500">';
                     loansHtml += '<strong>' + l.purpose + '</strong>';
-                    loansHtml += '<p class="text-sm"><strong>Loan Giver:</strong> ' + (l.loan_giver || 'N/A') + '</p>';
+                    const giverDisplay = l.loan_giver || 'N/A';
+                    const giverClickable = l.loan_giver ? '<span style="cursor:pointer;color:#2563eb;text-decoration:underline" onclick="document.getElementById(\'searchInput\').value=\''+l.loan_giver+'\';renderLoans();" title="Search for this loan giver">' + giverDisplay + '</span>' : giverDisplay;
+                    loansHtml += '<p class="text-sm"><strong>Loan Giver:</strong> ' + giverClickable + '</p>';
                     loansHtml += collectorInfo;
                     const mpCurSymbol = mpCur === 'CHF' ? 'CHF ' : mpCur === 'MXN' ? 'MXN $' : '₹';
                     const monthlyDisplay = l.monthly_payment > 0 ? mpCurSymbol + l.monthly_payment.toLocaleString('en-IN') : 'No monthly payment';
@@ -2689,12 +2691,12 @@
             if (!loans || loans.length === 0) { alert('No loans loaded yet.'); return; }
             
             const filtered = loans.filter(l => {
-                if (searchTerm && !l.borrower_name.toLowerCase().includes(searchTerm)) return false;
+                if (searchTerm && !l.borrower_name.toLowerCase().includes(searchTerm) && !(l.loan_giver || '').toLowerCase().includes(searchTerm)) return false;
                 if (yearFilter && new Date(l.date).getFullYear().toString() !== yearFilter) return false;
                 if (collectorFilter && l.collector !== collectorFilter) return false;
                 if (currencyFilter && l.currency !== currencyFilter) return false;
                 if (purposeFilter && l.purpose !== purposeFilter) return false;
-                if (loanGiverFilter && (l.loan_giver || '').trim().toLowerCase() !== loanGiverFilter) return false;
+                if (loanGiverFilter && !(l.loan_giver || '').trim().toLowerCase().includes(loanGiverFilter)) return false;
                 if (statusFilter) {
                     const s = getStats(l);
                     if (statusFilter === 'active' && s.remaining <= 0) return false;
