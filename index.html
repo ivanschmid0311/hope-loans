@@ -1383,7 +1383,10 @@
             document.getElementById('modalPayDate').value = defaultDate;
             document.getElementById('modalPayComment').value = '';
             document.getElementById('modalConversionInfo').classList.add('hidden');
-            document.getElementById('modalAutoDistribute').checked = true;
+            document.getElementById('modalAutoDistribute').checked = false;
+            
+            // Currency reminder (CHF only)
+            if (mpCur === 'CHF') setTimeout(() => alert('⚠️ Check the currency before saving!'), 100);
             
             // Find other open loans for same borrower
             const borrowerName = loan.borrower_name.replace(/^\d+\s*-\s*/, '').trim().toLowerCase();
