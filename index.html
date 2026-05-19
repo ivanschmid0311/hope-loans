@@ -1797,15 +1797,12 @@
                             
                             // Show payment in original currency if available
                             let paymentDisplay = '';
-                            if (p.payment_currency && p.original_amount && p.payment_currency !== 'INR') {
-                                // Show original currency and INR equivalent
-                                const currencySymbol = p.payment_currency === 'CHF' ? 'CHF' : (p.payment_currency === 'MXN' ? '$' : '₹');
-                                paymentDisplay = currencySymbol + ' ' + p.original_amount.toLocaleString('en-IN') + ' (₹' + p.amount.toLocaleString('en-IN') + ')';
-                                console.log('✅ Showing with currency:', paymentDisplay);
+                            if (p.payment_currency === 'MXN' && p.original_amount) {
+                                paymentDisplay = 'MXN $' + p.original_amount.toLocaleString('en-US');
+                            } else if (p.payment_currency === 'CHF' && p.original_amount) {
+                                paymentDisplay = 'CHF ' + p.original_amount.toLocaleString('en-US') + ' (₹' + p.amount.toLocaleString('en-IN') + ')';
                             } else {
-                                // Show only INR
                                 paymentDisplay = '₹' + p.amount.toLocaleString('en-IN');
-                                console.log('⚠️ Showing INR only:', paymentDisplay);
                             }
                             
                             paymentHistory += '<div class="flex justify-between items-center mb-1 p-1 hover:bg-gray-200 rounded">';
