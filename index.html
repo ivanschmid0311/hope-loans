@@ -1327,7 +1327,7 @@
             if (amountStr === null) return;
             const amount = parseFloat(amountStr) || remaining;
             
-            const reason = prompt(`Reason for forgiveness (required):`, '');
+            const reason = prompt(`Reason for forgiveness:`, '');
             if (reason === null) return;
             
             if (!confirm(`${loan.borrower_name}: Forgive ${sym}${amount.toLocaleString('en-IN')}?\n\nReason: ${reason || 'No reason given'}\n\nThis payment will NOT be imported into the balance.`)) return;
@@ -1520,8 +1520,7 @@
                                         payment_currency: currency,
                                         date: payDate,
                                         comment: (comment || 'Auto') + ' (' + monthNames[um.month] + ' ' + um.year + ')',
-                                        recorded_at: new Date().toISOString(),
-                                        entered_by: currentUser ? currentUser.name : ''
+                                        recorded_at: new Date().toISOString()
                                     });
                                     remaining -= payAmt;
                                 }
@@ -1614,13 +1613,32 @@
 
         function getStats(loan) {
             const lp = payments.filter(p => p.loan_id === loan.id);
+            
+            if (loan.currency === 'MXN') {
+                // MXN loans: work entirely in MXN (no INR conversion)
+                let paid = 0;
+                lp.forEach(p => {
+                    if (p.original_amount && p.payment_currency === 'MXN') {
+                        paid += p.original_amount;
+                    } else if (p.payment_currency === 'MXN') {
+                        paid += p.amount;
+                    } else {
+                        paid += p.original_amount || p.amount; // fallback
+                    }
+                });
+                const remaining = loan.amount - paid;
+                const progress = loan.amount > 0 ? (paid / loan.amount) * 100 : 0;
+                return {paid, remaining, progress, count: lp.length, currency: 'MXN'};
+            }
+            
+            // INR and CHF loans: work in INR
             const paid = lp.reduce((s, p) => s + p.amount, 0);
             const rate = getChfRate(loan.date);
             const loanAmount = loan.currency === 'INR' ? loan.amount : loan.amount * rate;
             const remaining = loanAmount - paid;
             const progress = (paid / loanAmount) * 100;
             
-            return {paid, remaining, progress, count: lp.length};
+            return {paid, remaining, progress, count: lp.length, currency: loan.currency === 'INR' ? 'INR' : 'CHF'};
         }
 
         function populateYearFilter() {
@@ -1755,7 +1773,11 @@
                     }
                 });
 
-                const prog = (totalPaid / totalBorrowed) * 100;
+                // For MXN-only borrowers, use native totals for progress
+                const isMXNOnly = nativeCurrency === 'MXN' && totalBorrowed === 0;
+                const prog = isMXNOnly
+                    ? (totalBorrowedNative > 0 ? (totalPaidNative / totalBorrowedNative) * 100 : 0)
+                    : (totalBorrowed > 0 ? (totalPaid / totalBorrowed) * 100 : 0);
                 let loansHtml = '';
 
                 bLoans.forEach((l, i) => {
@@ -1806,7 +1828,7 @@
                     
                     // Determine display currency: if loan currency matches monthly payment currency, show in that currency
                     const mpCur = l.monthly_payment_currency || 'INR';
-                    const showInNative = (l.currency !== 'INR' && l.currency === mpCur);
+                    const showInNative = l.currency === 'MXN' || (l.currency !== 'INR' && l.currency === mpCur);
                     const curSymbol = l.currency === 'CHF' ? 'CHF ' : l.currency === 'MXN' ? 'MXN $' : '₹';
                     
                     // For native currency display, sum original_amount from payments where available
@@ -1839,9 +1861,9 @@
                     let displayAmount, displayPaid, displayRemaining, displayExpBal;
                     if (showInNative) {
                         const nativeRemaining = l.amount - nativePaid;
-                        displayAmount = curSymbol + l.amount.toLocaleString();
-                        displayPaid = curSymbol + Math.round(nativePaid).toLocaleString();
-                        displayRemaining = curSymbol + Math.round(nativeRemaining).toLocaleString();
+                        displayAmount = curSymbol + l.amount.toLocaleString('en-US');
+                        displayPaid = curSymbol + Math.round(nativePaid).toLocaleString('en-US');
+                        displayRemaining = curSymbol + Math.round(nativeRemaining).toLocaleString('en-US');
                         displayExpBal = curSymbol + Math.round(expectedBalanceNative).toLocaleString();
                     } else if (l.currency !== 'INR') {
                         // Loan in CHF/MXN but repayment in INR: show both
@@ -1917,7 +1939,7 @@
                             <div>
                                 <h2 class="text-xl font-bold">${name}</h2>
                                 <p class="text-sm">${prog.toFixed(1)}% paid</p>
-                                <p>Borrowed: ${hasNonINR ? nativeCurrency + ' ' + totalBorrowedNative.toLocaleString() + ' / ' : ''}₹${totalBorrowed.toLocaleString('en-IN')} | Paid: ${hasNonINR ? nativeCurrency + ' ' + Math.round(totalPaidNative).toLocaleString() + ' / ' : ''}₹${totalPaid.toLocaleString('en-IN')}</p>
+                                <p>${isMXNOnly ? 'MXN $' + totalBorrowedNative.toLocaleString('en-US') + ' | Paid: MXN $' + Math.round(totalPaidNative).toLocaleString('en-US') : 'Borrowed: ' + (hasNonINR ? nativeCurrency + ' ' + totalBorrowedNative.toLocaleString('en-US') + ' / ' : '') + '₹' + totalBorrowed.toLocaleString('en-IN') + ' | Paid: ' + (hasNonINR ? nativeCurrency + ' ' + Math.round(totalPaidNative).toLocaleString('en-US') + ' / ' : '') + '₹' + totalPaid.toLocaleString('en-IN')}</p>
                             </div>
                             <div class="flex gap-2">
                                 <button onclick="generatePrintDocument('${escapedName}')" class="bg-white text-indigo-600 px-3 py-1 rounded text-sm hover:bg-indigo-50 font-semibold">📄 Print/PDF</button>
@@ -2084,9 +2106,19 @@
                 const mpCurSym = (loan.monthly_payment_currency === 'CHF' ? 'CHF ' : loan.monthly_payment_currency === 'MXN' ? 'MXN $' : '₹');
                 
                 // Display amounts in loan's native currency where possible
-                const displayLoanAmt = loan.currency !== 'INR' ? loanCurSym + loan.amount.toLocaleString('en-IN') : '₹' + amountInINR.toLocaleString('en-IN');
-                const displayPaid = loan.currency !== 'INR' ? loanCurSym + (stats.paid / (loan.currency === 'CHF' ? rate : 1)).toLocaleString('en-IN') : '₹' + stats.paid.toLocaleString('en-IN');
-                const displayRemaining = loan.currency !== 'INR' ? loanCurSym + (stats.remaining / (loan.currency === 'CHF' ? rate : 1)).toLocaleString('en-IN') : '₹' + stats.remaining.toLocaleString('en-IN');
+                const displayLoanAmt = loan.currency !== 'INR' ? loanCurSym + loan.amount.toLocaleString('en-US') : '₹' + amountInINR.toLocaleString('en-IN');
+                let displayPaid, displayRemaining;
+                if (loan.currency === 'MXN') {
+                    // MXN: stats already in MXN native
+                    displayPaid = loanCurSym + Math.round(stats.paid).toLocaleString('en-US');
+                    displayRemaining = loanCurSym + Math.round(stats.remaining).toLocaleString('en-US');
+                } else if (loan.currency === 'CHF') {
+                    displayPaid = loanCurSym + (stats.paid / rate).toLocaleString('en-US');
+                    displayRemaining = loanCurSym + (stats.remaining / rate).toLocaleString('en-US');
+                } else {
+                    displayPaid = '₹' + stats.paid.toLocaleString('en-IN');
+                    displayRemaining = '₹' + stats.remaining.toLocaleString('en-IN');
+                }
 
                 return `<div class="bg-white rounded-lg shadow mb-4 border-l-4 border-yellow-400">
                     <div class="p-4">
@@ -2105,7 +2137,7 @@
                             </div>
                             <div>
                                 <p class="text-gray-600">Monthly Payment:</p>
-                                <p class="font-semibold">${mpCurSym}${loan.monthly_payment.toLocaleString('en-IN')}</p>
+                                <p class="font-semibold">${mpCurSym}${loan.monthly_payment.toLocaleString(loan.currency === 'MXN' ? 'en-US' : 'en-IN')}</p>
                             </div>
                             <div>
                                 <p class="text-gray-600">Total Paid:</p>
@@ -2176,7 +2208,8 @@
                         amount: 0,
                         date: paymentDate,
                         note: reason,
-                        recorded_at: new Date().toISOString()
+                        recorded_at: new Date().toISOString(),
+                        entered_by: currentUser ? currentUser.name : ''
                     };
                     
                     try {
