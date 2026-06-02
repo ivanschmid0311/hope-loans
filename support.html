@@ -294,7 +294,7 @@
                     <td class="px-4 py-3 font-semibold text-indigo-600">${r.currency === 'INR' ? '₹' : 'CHF '}${(r.monthly_amount || 0).toLocaleString(r.currency === 'INR' ? 'en-IN' : 'de-CH')}</td>
                     <td class="px-4 py-3">${r.swiss_account_holder || 'N/A'}</td>
                     <td class="px-4 py-3">${r.team || 'N/A'}</td>
-                    <td class="px-4 py-3 text-sm font-mono">${r.account_number ? r.account_number + (r.ifsc ? ' ' + r.ifsc : '') + (r.account_name ? '<br>' + r.account_name : '') : (r.bank_account || '')}${r.upi ? ' UPI: ' + r.upi : ''}${!r.account_number && !r.bank_account && !r.upi ? 'N/A' : ''}</td>
+                    <td class="px-4 py-3 text-sm font-mono">${(r.bank_account || r.account_number || '') + (r.upi ? ' UPI: ' + r.upi : '') || 'N/A'}</td>
                     <td class="px-4 py-3 text-sm text-gray-600">${r.notes || ''}</td>
                     <td class="px-4 py-3 text-center">
                         ${currentUser.role === 'admin' ? `
@@ -333,7 +333,7 @@
             document.getElementById('recipientAmount').value = recipient.monthly_amount;
             document.getElementById('recipientSwissAccount').value = recipient.swiss_account_holder;
             document.getElementById('recipientTeam').value = recipient.team;
-            document.getElementById('recipientBankAccount').value = recipient.account_number ? (recipient.account_number + (recipient.ifsc ? ' ' + recipient.ifsc : '')) : (recipient.bank_account || '');
+            document.getElementById('recipientBankAccount').value = recipient.bank_account || recipient.account_number || '';
             document.getElementById('recipientNotes').value = recipient.notes || '';
             
             document.getElementById('recipientModal').classList.remove('hidden');
@@ -366,7 +366,6 @@
                 swiss_account_holder: document.getElementById('recipientSwissAccount').value.trim(),
                 team: document.getElementById('recipientTeam').value.trim(),
                 bank_account: document.getElementById('recipientBankAccount').value.trim(),
-                account_number: document.getElementById('recipientBankAccount').value.trim(),
                 notes: document.getElementById('recipientNotes').value.trim(),
                 updated_at: new Date().toISOString(),
                 updated_by: currentUser.email
