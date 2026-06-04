@@ -294,7 +294,7 @@
                     <td class="px-4 py-3 font-semibold text-indigo-600">${r.currency === 'INR' ? '₹' : 'CHF '}${(r.monthly_amount || 0).toLocaleString(r.currency === 'INR' ? 'en-IN' : 'de-CH')}</td>
                     <td class="px-4 py-3">${r.swiss_account_holder || 'N/A'}</td>
                     <td class="px-4 py-3">${r.team || 'N/A'}</td>
-                    <td class="px-4 py-3 text-sm font-mono">${(r.bank_account || r.account_number || '') + (r.upi ? ' UPI: ' + r.upi : '') || 'N/A'}</td>
+                    <td class="px-4 py-3 text-sm font-mono">${(() => { const parts = []; if (r.account_number) parts.push(r.account_number); if (r.ifsc) parts.push(r.ifsc); if (r.bank_account && r.bank_account !== r.account_number) parts.push(r.bank_account); if (r.account_name) parts.push(r.account_name); if (r.upi) parts.push('UPI: ' + r.upi); return parts.length ? parts.join(' / ') : 'N/A'; })()}</td>
                     <td class="px-4 py-3 text-sm text-gray-600">${r.notes || ''}</td>
                     <td class="px-4 py-3 text-center">
                         ${currentUser.role === 'admin' ? `
@@ -333,7 +333,14 @@
             document.getElementById('recipientAmount').value = recipient.monthly_amount;
             document.getElementById('recipientSwissAccount').value = recipient.swiss_account_holder;
             document.getElementById('recipientTeam').value = recipient.team;
-            document.getElementById('recipientBankAccount').value = recipient.bank_account || recipient.account_number || '';
+            // Build full bank string from all stored fields
+            const bankParts = [];
+            if (recipient.account_number) bankParts.push(recipient.account_number);
+            if (recipient.ifsc) bankParts.push(recipient.ifsc);
+            if (recipient.bank_account && recipient.bank_account !== recipient.account_number) bankParts.push(recipient.bank_account);
+            if (recipient.account_name) bankParts.push(recipient.account_name);
+            if (recipient.upi) bankParts.push('UPI: ' + recipient.upi);
+            document.getElementById('recipientBankAccount').value = bankParts.join(' / ');
             document.getElementById('recipientNotes').value = recipient.notes || '';
             
             document.getElementById('recipientModal').classList.remove('hidden');
@@ -400,7 +407,7 @@
             let csv = 'Name,Type,Currency,Monthly Amount,Swiss Account Holder,Team,Bank Account/UPI,Notes\n';
             
             recipients.forEach(r => {
-                csv += `"${r.name}","${r.type}","${r.currency || 'CHF'}",${r.monthly_amount},"${r.swiss_account_holder}","${r.team}","${r.account_number || r.bank_account || ''}${r.ifsc ? ' ' + r.ifsc : ''}","${r.notes || ''}"\n`;
+                csv += `"${r.name}","${r.type}","${r.currency || 'CHF'}",${r.monthly_amount},"${r.swiss_account_holder}","${r.team}","${(() => { const p = []; if (r.account_number) p.push(r.account_number); if (r.ifsc) p.push(r.ifsc); if (r.bank_account && r.bank_account !== r.account_number) p.push(r.bank_account); if (r.account_name) p.push(r.account_name); return p.join(' / ') || ''; })()}","${r.notes || ''}"\n`;
             });
             
             const BOM = '\uFEFF';
