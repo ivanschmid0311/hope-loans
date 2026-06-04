@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hope Association – Loan Request</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --hope-blue: #3b4fd8;
+    --hope-dark: #1a1f4e;
+    --hope-light: #f0f2ff;
+    --hope-accent: #e8a020;
+    --text: #2d2d2d;
+    --muted: #6b7280;
+    --border: #d1d5db;
+    --success: #16a34a;
+    --error: #dc2626;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f7f8fc;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--hope-dark);
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-logo {
+    width: 44px; height: 44px;
+    background: var(--hope-blue);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .header-text h1 {
+    font-family: 'Lora', serif;
+    font-size: 1.3rem;
+    color: #fff;
+    font-weight: 600;
+  }
+  .header-text p {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.55);
+    margin-top: 1px;
+  }
+
+  /* Hero strip */
+  .hero {
+    background: linear-gradient(135deg, var(--hope-blue) 0%, #5b6ef5 100%);
+    padding: 36px 32px 32px;
+    color: white;
+  }
+  .hero h2 {
+    font-family: 'Lora', serif;
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .hero p {
+    font-size: 0.95rem;
+    opacity: 0.85;
+    max-width: 560px;
+    line-height: 1.6;
+  }
+
+  /* Main container */
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+  }
+
+  /* Section cards */
+  .section {
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .section-header {
+    background: var(--hope-light);
+    padding: 14px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-header span.icon {
+    font-size: 1.1rem;
+  }
+  .section-header h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--hope-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .section-body {
+    padding: 24px;
+  }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 560px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .hero { padding: 28px 20px; }
+    .header { padding: 18px 20px; }
+    .section-body { padding: 18px; }
+    .container { padding: 20px 16px 60px; }
+  }
+
+  /* Form fields */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--hope-dark);
+  }
+  .field label .req { color: var(--hope-blue); margin-left: 2px; }
+  .field input, .field textarea, .field select {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fff;
+    width: 100%;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: none;
+    border-color: var(--hope-blue);
+    box-shadow: 0 0 0 3px rgba(59,79,216,0.1);
+  }
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  .field .hint {
+    font-size: 0.76rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* Currency row */
+  .amount-row { display: grid; grid-template-columns: 1fr 120px; gap: 12px; }
+  @media (max-width: 400px) { .amount-row { grid-template-columns: 1fr; } }
+
+  /* Info box */
+  .info-box {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 0.82rem;
+    color: #92400e;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  /* Submit button */
+  .submit-wrap { text-align: center; margin-top: 28px; }
+  .btn-submit {
+    background: var(--hope-blue);
+    color: white;
+    border: none;
+    padding: 14px 48px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+  .btn-submit:hover { background: var(--hope-dark); }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-submit:disabled { background: #9ca3af; cursor: not-allowed; }
+
+  /* Success screen */
+  #successScreen {
+    display: none;
+    text-align: center;
+    padding: 60px 24px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  #successScreen .check {
+    font-size: 3.5rem;
+    margin-bottom: 16px;
+  }
+  #successScreen h2 {
+    font-family: 'Lora', serif;
+    font-size: 1.5rem;
+    color: var(--hope-dark);
+    margin-bottom: 10px;
+  }
+  #successScreen p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* Error messages */
+  .field-error {
+    font-size: 0.76rem;
+    color: var(--error);
+    display: none;
+  }
+  .field.has-error input, .field.has-error textarea, .field.has-error select {
+    border-color: var(--error);
+  }
+  .field.has-error .field-error { display: block; }
+
+  /* Loading spinner */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">🕊️</div>
+  <div class="header-text">
+    <h1>Hope Association</h1>
+    <p>hopeausland-bern.ch</p>
+  </div>
+</div>
+
+<div class="hero">
+  <h2>Loan Request Form</h2>
+  <p>Please fill in all the details below. Your request will be reviewed by the Hope team and you will be contacted directly.</p>
+</div>
+
+<div class="container">
+
+  <div id="formWrapper">
+
+    <!-- 1. Personal Info -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">👤</span>
+        <h3>Personal Information</h3>
+      </div>
+      <div class="section-body">
+        <div class="grid-2" style="gap:16px">
+          <div class="field" id="f-fullName">
+            <label>Full Name <span class="req">*</span></label>
+            <input type="text" id="fullName" placeholder="Your full name" />
+            <span class="field-error">Please enter your full name.</span>
+          </div>
+          <div class="field" id="f-phone">
+            <label>Phone / WhatsApp <span class="req">*</span></label>
+            <input type="tel" id="phone" placeholder="+91 …" />
+            <span class="field-error">Please enter a phone number.</span>
+          </div>
+        </div>
+        <div style="margin-top:16px" class="field" id="f-place">
+          <label>City / Place <span class="req">*</span></label>
+          <input type="text" id="place" placeholder="e.g. Chennai, Hyderabad, Trichy…" />
+          <span class="field-error">Please enter your city or place.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Loan Details -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">💰</span>
+        <h3>Loan Details</h3>
+      </div>
+      <div class="section-body">
+        <div class="field" id="f-purpose" style="margin-bottom:16px">
+          <label>Purpose / Explanation <span class="req">*</span></label>
+          <textarea id="purpose" placeholder="Describe what the loan is for and why you need it…"></textarea>
+          <span class="field-error">Please describe the purpose of the loan.</span>
+        </div>
+
+        <div class="amount-row" style="margin-bottom:16px">
+          <div class="field" id="f-amount">
+            <label>Requested Amount <span class="req">*</span></label>
+            <input type="number" id="amount" min="0" placeholder="0" />
+            <span class="field-error">Please enter a valid amount.</span>
+          </div>
+          <div class="field">
+            <label>Currency</label>
+            <select id="currency">
+              <option value="INR">INR ₹</option>
+              <option value="CHF">CHF</option>
+              <option value="MXN">MXN $</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" id="f-monthly">
+          <label>Monthly Repayment Amount <span class="req">*</span></label>
+          <input type="number" id="monthly" min="0" placeholder="How much can you pay back per month?" />
+          <span class="hint">Same currency as above. This helps us assess the loan duration.</span>
+          <span class="field-error">Please enter a monthly repayment amount.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Financial Situation -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">📊</span>
+        <h3>Financial Situation</h3>
+      </div>
+      <div class="section-body">
+        <div class="field" style="margin-bottom:16px" id="f-existing">
+          <label>Existing Loans or Financial Support</label>
+          <textarea id="existing" placeholder="Do you currently have any other loans or financial support? From whom, and how much? (Write 'None' if not applicable)"></textarea>
+          <span class="hint">Be transparent — this helps us make a fair decision.</span>
+        </div>
+        <div class="field" id="f-selfFinance">
+          <label>How much can you finance yourself? <span class="req">*</span></label>
+          <input type="text" id="selfFinance" placeholder="e.g. ₹10,000 from savings, or 'Nothing at this time'" />
+          <span class="hint">Own savings, family support, or other resources available for this project.</span>
+          <span class="field-error">Please fill in this field.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Bank Details -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">🏦</span>
+        <h3>Bank Account Details</h3>
+      </div>
+      <div class="section-body">
+        <div class="info-box">
+          ℹ️ Please provide your bank details so that Hope Association can transfer the loan directly to your account if approved.
+        </div>
+        <div class="grid-2" style="gap:16px; margin-bottom:16px">
+          <div class="field" id="f-accountName">
+            <label>Account Holder Name <span class="req">*</span></label>
+            <input type="text" id="accountName" placeholder="Name on bank account" />
+            <span class="field-error">Please enter the account holder name.</span>
+          </div>
+          <div class="field" id="f-accountNumber">
+            <label>Account Number <span class="req">*</span></label>
+            <input type="text" id="accountNumber" placeholder="Bank account number" />
+            <span class="field-error">Please enter your account number.</span>
+          </div>
+        </div>
+        <div class="grid-2" style="gap:16px; margin-bottom:16px">
+          <div class="field" id="f-ifsc">
+            <label>IFSC / Bank Code</label>
+            <input type="text" id="ifsc" placeholder="e.g. IDIB0000008" />
+            <span class="hint">Required for Indian bank transfers.</span>
+          </div>
+          <div class="field">
+            <label>Bank Name</label>
+            <input type="text" id="bankName" placeholder="e.g. Indian Bank, SBI…" />
+          </div>
+        </div>
+        <div class="field">
+          <label>UPI ID (optional)</label>
+          <input type="text" id="upi" placeholder="e.g. name@upi" />
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-wrap">
+      <button class="btn-submit" id="submitBtn" onclick="submitRequest()">
+        Submit Loan Request
+      </button>
+    </div>
+
+  </div><!-- /formWrapper -->
+
+  <div id="successScreen">
+    <div class="check">✅</div>
+    <h2>Request Submitted!</h2>
+    <p>Thank you. Your loan request has been received by the Hope Association team. We will review it and contact you as soon as possible.</p>
+  </div>
+
+</div><!-- /container -->
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBq6u09yrCy_2QZJXpuh-RKWo0_5wXsTag",
+  authDomain: "hope-association-loans.firebaseapp.com",
+  projectId: "hope-association-loans",
+  storageBucket: "hope-association-loans.firebasestorage.app",
+  messagingSenderId: "432884261468",
+  appId: "1:432884261468:web:d92185f8bce4f550c17c99"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+function validate(id, fieldId) {
+  const val = document.getElementById(id).value.trim();
+  const field = document.getElementById(fieldId);
+  if (!val) {
+    field.classList.add('has-error');
+    return false;
+  }
+  field.classList.remove('has-error');
+  return true;
+}
+
+window.submitRequest = async function() {
+  // Validate required fields
+  let ok = true;
+  ok = validate('fullName', 'f-fullName') && ok;
+  ok = validate('phone', 'f-phone') && ok;
+  ok = validate('place', 'f-place') && ok;
+  ok = validate('purpose', 'f-purpose') && ok;
+  ok = validate('amount', 'f-amount') && ok;
+  ok = validate('monthly', 'f-monthly') && ok;
+  ok = validate('selfFinance', 'f-selfFinance') && ok;
+  ok = validate('accountName', 'f-accountName') && ok;
+  ok = validate('accountNumber', 'f-accountNumber') && ok;
+  if (!ok) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Submitting…';
+
+  const bankDetails = [
+    document.getElementById('accountName').value.trim(),
+    document.getElementById('accountNumber').value.trim(),
+    document.getElementById('ifsc').value.trim(),
+    document.getElementById('bankName').value.trim(),
+    document.getElementById('upi').value.trim() ? 'UPI: ' + document.getElementById('upi').value.trim() : ''
+  ].filter(Boolean).join(' / ');
+
+  const request = {
+    full_name: document.getElementById('fullName').value.trim(),
+    ministry_place: document.getElementById('place').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    explanation: document.getElementById('purpose').value.trim(),
+    currency: document.getElementById('currency').value,
+    amount: parseFloat(document.getElementById('amount').value),
+    monthly_payback: parseFloat(document.getElementById('monthly').value),
+    other_resources: document.getElementById('existing').value.trim() || 'None',
+    self_finance: document.getElementById('selfFinance').value.trim(),
+    bank_account: bankDetails,
+    status: 'pending',
+    submitted_date: new Date().toISOString(),
+    submitted_by: 'public_form',
+    source: 'loan_request_form'
+  };
+
+  try {
+    await addDoc(collection(db, 'requests'), request);
+    document.getElementById('formWrapper').style.display = 'none';
+    document.getElementById('successScreen').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    console.error(err);
+    btn.disabled = false;
+    btn.innerHTML = 'Submit Loan Request';
+    alert('Something went wrong. Please try again or contact Hope Association directly.');
+  }
+};
+</script>
+</body>
+</html>
