@@ -56,6 +56,12 @@
                     <option value="Family">Families</option>
                     <option value="Single">Singles</option>
                 </select>
+                <select id="filterOrg" class="px-4 py-2 border rounded-lg font-semibold">
+                    <option value="">All Organisations</option>
+                    <option value="Hope">🕊️ Hope</option>
+                    <option value="Seeds">🌱 Seeds</option>
+                    <option value="Alive">⚡ Alive</option>
+                </select>
                 <select id="filterTeam" class="px-4 py-2 border rounded-lg">
                     <option value="">All Teams</option>
                 </select>
@@ -74,7 +80,7 @@
                 <table class="w-full">
                     <thead class="bg-indigo-600 text-white">
                         <tr>
-                            <th class="px-4 py-3 text-left">Name</th>
+                            <th class="px-4 py-3 text-left">Org</th><th class="px-4 py-3 text-left">Name</th>
                             <th class="px-4 py-3 text-left">Type</th>
                             <th class="px-4 py-3 text-left">Monthly Amount</th>
                             <th class="px-4 py-3 text-left">Swiss Account</th>
@@ -128,6 +134,14 @@
                     <div>
                         <label class="block text-sm font-medium mb-2">Team *</label>
                         <input type="text" id="recipientTeam" required placeholder="e.g., Coimbatore, Salem" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Organisation *</label>
+                        <select id="recipientOrg" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="Hope">🕊️ Hope</option>
+                            <option value="Seeds">🌱 Seeds</option>
+                            <option value="Alive">⚡ Alive</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-2">Bank Account / UPI *</label>
@@ -266,6 +280,8 @@
             let filtered = recipients.filter(r => {
                 if (searchTerm && !r.name.toLowerCase().includes(searchTerm)) return false;
                 if (filterType && r.type !== filterType) return false;
+                const filterOrg = document.getElementById('filterOrg').value;
+                if (filterOrg && (r.organization || 'Hope') !== filterOrg) return false;
                 if (filterTeam && r.team !== filterTeam) return false;
                 if (filterSwiss && r.swiss_account_holder !== filterSwiss) return false;
                 return true;
@@ -285,6 +301,7 @@
 
             tbody.innerHTML = filtered.map(r => `
                 <tr class="border-b hover:bg-gray-50">
+                    <td class="px-4 py-3"><span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:12px;background:${(r.organization||'Hope')==='Seeds'?'#dcfce7;color:#15803d':(r.organization||'Hope')==='Alive'?'#ffedd5;color:#c2410c':'#e0e7ff;color:#3730a3'}">${r.organization||'Hope'}</span></td>
                     <td class="px-4 py-3 font-semibold">${r.name || 'N/A'}</td>
                     <td class="px-4 py-3">
                         <span class="px-2 py-1 rounded-full text-xs font-semibold ${r.type === 'Family' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}">
@@ -333,6 +350,7 @@
             document.getElementById('recipientAmount').value = recipient.monthly_amount;
             document.getElementById('recipientSwissAccount').value = recipient.swiss_account_holder;
             document.getElementById('recipientTeam').value = recipient.team;
+            document.getElementById('recipientOrg').value = recipient.organization || 'Hope';
             // Build full bank string from all stored fields
             const bankParts = [];
             if (recipient.account_number) bankParts.push(recipient.account_number);
@@ -372,6 +390,7 @@
                 monthly_amount: parseFloat(document.getElementById('recipientAmount').value),
                 swiss_account_holder: document.getElementById('recipientSwissAccount').value.trim(),
                 team: document.getElementById('recipientTeam').value.trim(),
+                organization: document.getElementById('recipientOrg').value,
                 bank_account: document.getElementById('recipientBankAccount').value.trim(),
                 notes: document.getElementById('recipientNotes').value.trim(),
                 updated_at: new Date().toISOString(),
@@ -399,6 +418,7 @@
         // Search and filter
         document.getElementById('searchInput').oninput = renderRecipients;
         document.getElementById('filterType').onchange = renderRecipients;
+        document.getElementById('filterOrg').onchange = renderRecipients;
         document.getElementById('filterTeam').onchange = renderRecipients;
         document.getElementById('filterSwiss').onchange = renderRecipients;
 
