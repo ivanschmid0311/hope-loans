@@ -483,36 +483,148 @@
             const teamLabel = document.getElementById('filterTeam').value || 'All Teams';
             const date = new Date().toLocaleDateString('de-CH');
             const totalCHF = filtered.reduce((s,r) => (r.currency||'CHF')==='CHF' ? s+(parseFloat(r.monthly_amount)||0) : s, 0);
+            const totalFamilies = filtered.filter(r=>r.type==='Family').length;
+            const totalSingles = filtered.filter(r=>r.type==='Single').length;
+
+            const orgColors = {Hope:'#3730a3',Seeds:'#15803d',Alive:'#c2410c'};
+            const orgBg = {Hope:'#e0e7ff',Seeds:'#dcfce7',Alive:'#ffedd5'};
+
             const rows = filtered.map((r,i) => {
+                const org = r.organization||'Hope';
                 const bank = r.bank_account || [r.account_number,r.ifsc,r.account_name].filter(Boolean).join(' / ') || '—';
-                return `<tr style="background:${i%2===0?'#f9fafb':'#fff'}">
-                    <td>${i+1}</td><td><strong>${r.name||'—'}</strong></td>
-                    <td>${r.organization||'Hope'}</td><td>${r.type||'—'}</td>
-                    <td style="color:#3730a3;font-weight:600">${r.currency||'CHF'} ${parseFloat(r.monthly_amount||0).toLocaleString('de-CH')}</td>
-                    <td>${r.swiss_account_holder||'—'}</td><td>${r.team||'—'}</td>
-                    <td style="color:#6b7280;font-size:10px">${bank}</td>
-                    <td>${r.notes||''}</td></tr>`;
+                const orgBadge = `<span style="background:${orgBg[org]||'#e0e7ff'};color:${orgColors[org]||'#3730a3'};padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700">${org}</span>`;
+                const typeBadge = r.type==='Family'
+                    ? `<span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700">Family</span>`
+                    : `<span style="background:#f3e8ff;color:#6b21a8;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700">Single</span>`;
+                return `<tr style="background:${i%2===0?'#f8faff':'#ffffff'}">
+                    <td style="color:#9ca3af;font-size:10px;text-align:center">${i+1}</td>
+                    <td style="font-weight:700;color:#1e1b4b">${r.name||'—'}</td>
+                    <td>${orgBadge}</td>
+                    <td>${typeBadge}</td>
+                    <td style="font-weight:700;color:#3730a3;white-space:nowrap">${r.currency||'CHF'} ${parseFloat(r.monthly_amount||0).toLocaleString('de-CH')}</td>
+                    <td style="color:#374151">${r.swiss_account_holder||'—'}</td>
+                    <td style="color:#374151">${r.team||'—'}</td>
+                    <td style="color:#6b7280;font-size:9px;max-width:160px;word-break:break-all">${bank}</td>
+                    <td style="color:#6b7280;font-size:10px">${r.notes||''}</td>
+                </tr>`;
             }).join('');
-            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Support Recipients</title>
-            <style>body{font-family:Arial,sans-serif;margin:20px;font-size:12px}
-            h1{color:#3730a3;font-size:16px;margin-bottom:4px}
-            .meta{color:#6b7280;font-size:11px;margin-bottom:14px}
-            table{width:100%;border-collapse:collapse}
-            thead tr{background:#3730a3;color:#fff}
-            th{padding:7px 8px;text-align:left;font-size:10px}
-            td{padding:6px 8px;border-bottom:1px solid #e5e7eb}
-            .footer{margin-top:14px;font-weight:bold}
-            @page{size:A4 landscape;margin:15mm}</style></head><body>
-            <h1>💝 Hope Association — Monthly Support Recipients</h1>
-            <div class="meta">Organisation: ${orgLabel} | Team: ${teamLabel} | ${filtered.length} recipients | ${date}</div>
-            <table><thead><tr><th>#</th><th>Name</th><th>Org</th><th>Type</th><th>Monthly</th><th>Swiss Account</th><th>Team</th><th>Bank/UPI</th><th>Notes</th></tr></thead>
-            <tbody>${rows}</tbody></table>
-            <div class="footer">Total CHF: CHF ${totalCHF.toLocaleString('de-CH')}</div>
+
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <title>Hope Support Recipients</title>
+            <style>
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #111; }
+                
+                .header {
+                    background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 100%);
+                    padding: 24px 28px 20px;
+                    color: white;
+                }
+                .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 4px; }
+                .header .subtitle { font-size: 11px; opacity: 0.7; }
+                
+                .meta-bar {
+                    background: #f1f5f9;
+                    border-bottom: 1px solid #e2e8f0;
+                    padding: 10px 28px;
+                    display: flex;
+                    gap: 24px;
+                    font-size: 11px;
+                    color: #475569;
+                }
+                .meta-bar strong { color: #1e1b4b; }
+                
+                .stats {
+                    display: flex;
+                    gap: 16px;
+                    padding: 16px 28px;
+                    border-bottom: 2px solid #e0e7ff;
+                }
+                .stat-box {
+                    background: #f8faff;
+                    border: 1px solid #e0e7ff;
+                    border-radius: 8px;
+                    padding: 10px 18px;
+                    text-align: center;
+                }
+                .stat-box .val { font-size: 18px; font-weight: 800; color: #3730a3; }
+                .stat-box .lbl { font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+                .table-wrap { padding: 16px 28px 24px; }
+                
+                table { width: 100%; border-collapse: collapse; }
+                thead tr {
+                    background: linear-gradient(90deg, #3730a3, #4f46e5);
+                    color: white;
+                }
+                th {
+                    padding: 9px 10px;
+                    text-align: left;
+                    font-size: 9px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.07em;
+                    font-weight: 600;
+                }
+                td { padding: 7px 10px; vertical-align: middle; }
+                tr:last-child td { border-bottom: none; }
+                
+                .footer {
+                    margin: 0 28px 28px;
+                    background: linear-gradient(90deg, #1e1b4b, #3730a3);
+                    color: white;
+                    border-radius: 10px;
+                    padding: 14px 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-size: 12px;
+                }
+                .footer .total { font-size: 18px; font-weight: 800; }
+                
+                @page { size: A4 landscape; margin: 8mm; }
+                @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+            </style></head><body>
+
+            <div class="header">
+                <h1>💝 Hope Association — Monthly Support Recipients</h1>
+                <div class="subtitle">hopeausland-bern.ch &nbsp;·&nbsp; Confidential</div>
+            </div>
+
+            <div class="meta-bar">
+                <span><strong>Organisation:</strong> ${orgLabel}</span>
+                <span><strong>Team:</strong> ${teamLabel}</span>
+                <span><strong>Date:</strong> ${date}</span>
+            </div>
+
+            <div class="stats">
+                <div class="stat-box"><div class="val">${filtered.length}</div><div class="lbl">Recipients</div></div>
+                <div class="stat-box"><div class="val">${totalFamilies}</div><div class="lbl">Families</div></div>
+                <div class="stat-box"><div class="val">${totalSingles}</div><div class="lbl">Singles</div></div>
+                <div class="stat-box" style="border-color:#fbbf24;background:#fffbeb"><div class="val" style="color:#b45309">CHF ${totalCHF.toLocaleString('de-CH')}</div><div class="lbl">Monthly Total</div></div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead><tr>
+                        <th style="width:28px">#</th>
+                        <th>Name</th><th>Org</th><th>Type</th><th>Monthly</th>
+                        <th>Swiss Account</th><th>Team</th><th>Bank / UPI</th><th>Notes</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+
+            <div class="footer">
+                <span>Hope Association Bern &nbsp;·&nbsp; Brunnmattstrasse 50, 3007 Bern</span>
+                <span>Monthly Total: <span class="total">CHF ${totalCHF.toLocaleString('de-CH')}</span></span>
+            </div>
+
             </body></html>`;
+
             const win = window.open('', '_blank');
             win.document.write(html);
             win.document.close();
-            setTimeout(() => win.print(), 400);
+            setTimeout(() => win.print(), 500);
         };
 
         // Export to CSV
