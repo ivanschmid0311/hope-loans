@@ -73,6 +73,9 @@
                 <button id="exportBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
                     📊 Export CSV
                 </button>
+                <button id="exportPdfBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                    📄 Export PDF
+                </button>
             </div>
         </div>
 
@@ -446,6 +449,21 @@
             }
         };
 
+        function getFilteredRecipients() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filterType = document.getElementById('filterType').value;
+            const filterTeam = document.getElementById('filterTeam').value;
+            const filterSwiss = document.getElementById('filterSwiss').value;
+            return recipients.filter(r => {
+                if (searchTerm && !r.name.toLowerCase().includes(searchTerm)) return false;
+                if (filterType && r.type !== filterType) return false;
+                if (currentOrgFilter && (r.organization || 'Hope') !== currentOrgFilter) return false;
+                if (filterTeam && r.team !== filterTeam) return false;
+                if (filterSwiss && r.swiss_account_holder !== filterSwiss) return false;
+                return true;
+            }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        }
+
         // Search and filter
         document.getElementById('searchInput').oninput = renderRecipients;
         document.getElementById('filterType').onchange = renderRecipients;
@@ -458,11 +476,50 @@
         document.getElementById('tabAlive').addEventListener('click', () => setOrgTab('Alive'));
         document.getElementById('filterSwiss').onchange = renderRecipients;
 
+        // Export to PDF
+        document.getElementById('exportPdfBtn').onclick = () => {
+            const filtered = getFilteredRecipients();
+            const orgLabel = currentOrgFilter || 'All';
+            const teamLabel = document.getElementById('filterTeam').value || 'All Teams';
+            const date = new Date().toLocaleDateString('de-CH');
+            const totalCHF = filtered.reduce((s,r) => (r.currency||'CHF')==='CHF' ? s+(parseFloat(r.monthly_amount)||0) : s, 0);
+            const rows = filtered.map((r,i) => {
+                const bank = r.bank_account || [r.account_number,r.ifsc,r.account_name].filter(Boolean).join(' / ') || '—';
+                return `<tr style="background:${i%2===0?'#f9fafb':'#fff'}">
+                    <td>${i+1}</td><td><strong>${r.name||'—'}</strong></td>
+                    <td>${r.organization||'Hope'}</td><td>${r.type||'—'}</td>
+                    <td style="color:#3730a3;font-weight:600">${r.currency||'CHF'} ${parseFloat(r.monthly_amount||0).toLocaleString('de-CH')}</td>
+                    <td>${r.swiss_account_holder||'—'}</td><td>${r.team||'—'}</td>
+                    <td style="color:#6b7280;font-size:10px">${bank}</td>
+                    <td>${r.notes||''}</td></tr>`;
+            }).join('');
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Support Recipients</title>
+            <style>body{font-family:Arial,sans-serif;margin:20px;font-size:12px}
+            h1{color:#3730a3;font-size:16px;margin-bottom:4px}
+            .meta{color:#6b7280;font-size:11px;margin-bottom:14px}
+            table{width:100%;border-collapse:collapse}
+            thead tr{background:#3730a3;color:#fff}
+            th{padding:7px 8px;text-align:left;font-size:10px}
+            td{padding:6px 8px;border-bottom:1px solid #e5e7eb}
+            .footer{margin-top:14px;font-weight:bold}
+            @page{size:A4 landscape;margin:15mm}</style></head><body>
+            <h1>💝 Hope Association — Monthly Support Recipients</h1>
+            <div class="meta">Organisation: ${orgLabel} | Team: ${teamLabel} | ${filtered.length} recipients | ${date}</div>
+            <table><thead><tr><th>#</th><th>Name</th><th>Org</th><th>Type</th><th>Monthly</th><th>Swiss Account</th><th>Team</th><th>Bank/UPI</th><th>Notes</th></tr></thead>
+            <tbody>${rows}</tbody></table>
+            <div class="footer">Total CHF: CHF ${totalCHF.toLocaleString('de-CH')}</div>
+            </body></html>`;
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            setTimeout(() => win.print(), 400);
+        };
+
         // Export to CSV
         document.getElementById('exportBtn').onclick = () => {
             let csv = 'Name,Type,Currency,Monthly Amount,Swiss Account Holder,Team,Bank Account/UPI,Notes\n';
             
-            recipients.forEach(r => {
+            getFilteredRecipients().forEach(r => {
                 csv += `"${r.name}","${r.type}","${r.currency || 'CHF'}",${r.monthly_amount},"${r.swiss_account_holder}","${r.team}","${(() => { const p = []; if (r.account_number) p.push(r.account_number); if (r.ifsc) p.push(r.ifsc); if (r.bank_account && r.bank_account !== r.account_number) p.push(r.bank_account); if (r.account_name) p.push(r.account_name); return p.join(' / ') || ''; })()}","${r.notes || ''}"\n`;
             });
             
