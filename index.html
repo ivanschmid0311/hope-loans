@@ -1046,17 +1046,11 @@
                         <button onclick="undoRequestStatus('${req.id}')" class="mt-2 text-sm text-yellow-600 hover:text-yellow-800">↩️ Undo → Back to Pending</button>
                         ` : ''}
 
-                        ${currentUser.role === 'admin' ? `
                         <div class="flex gap-2 mt-2 flex-wrap items-center">
-                            <button onclick="editRequest('${req.id}')" class="text-sm text-yellow-600 hover:text-yellow-800">✏️ Edit Request</button>
-                            <button onclick="deleteRequest('${req.id}')" class="text-sm text-red-600 hover:text-red-800">🗑️ Delete Request</button>
+                            ${currentUser.role === 'admin' ? `<button onclick="editRequest('${req.id}')" class="text-sm text-yellow-600 hover:text-yellow-800">✏️ Edit Request</button>
+                            <button onclick="deleteRequest('${req.id}')" class="text-sm text-red-600 hover:text-red-800">🗑️ Delete Request</button>` : ''}
                             <button onclick="printRequest('${req.id}')" class="text-sm text-indigo-600 hover:text-indigo-800 ml-auto">🖨️ Print / PDF</button>
                         </div>
-                        ` : ''}`}
-                        ${currentUser.role !== 'admin' ? `
-                        <div class="flex justify-end mt-2">
-                            <button onclick="printRequest('${req.id}')" class="text-sm text-indigo-600 hover:text-indigo-800">🖨️ Print / PDF</button>
-                        </div>` : ''}
                     </div>
                 </div>`;
             }).join('');
