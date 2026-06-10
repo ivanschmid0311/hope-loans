@@ -1735,12 +1735,11 @@
             const container = document.getElementById('ratesContainer');
             if (!container) return;
             console.log('renderSettings called, chfRates:', JSON.stringify(chfRates));
-            const sortedYears = Object.keys(chfRates).sort((a, b) => b - a);
-            
-            if (sortedYears.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm italic">No rates defined yet.</p>';
-                return;
+            // Fallback to defaults if not yet loaded
+            if (!chfRates || Object.keys(chfRates).length === 0) {
+                chfRates = {2024: 110, 2025: 110, 2026: 110};
             }
+            const sortedYears = Object.keys(chfRates).sort((a, b) => b - a);
 
             let rowsHtml = '';
             sortedYears.forEach((year, i) => {
@@ -3509,6 +3508,8 @@
         window.deleteRequest = deleteRequest;
         window.editRequest = editRequest;
         window.undoRequestStatus = undoRequestStatus;
+        window.printRequest = printRequest;
+        window.printRequestList = printRequestList;
         
         async function rateRequest(requestId, rating) {
             try {
