@@ -671,7 +671,6 @@
             document.getElementById('filterStatus').onchange = renderLoans;
             document.getElementById('clearFilters').onclick = clearFilters;
             document.getElementById('addRateBtn').onclick = addYearRate;
-            renderSettings();
             document.getElementById('exportFilteredBtn').onclick = exportFilteredLoans;
             document.getElementById('reminderPrevMonth').onclick = () => { reminderMonth.setMonth(reminderMonth.getMonth() - 1); renderReminders(); };
             document.getElementById('reminderNextMonth').onclick = () => { reminderMonth.setMonth(reminderMonth.getMonth() + 1); renderReminders(); };
@@ -1901,7 +1900,10 @@
                     const statusColor = isOnTrack ? 'text-green-600' : 'text-red-600';
                     const statusText = isOnTrack ? '✓ On Track' : '⚠ Behind Schedule';
 
-                    loansHtml += '<div class="bg-gray-50 p-3 rounded border-l-4 border-indigo-500">';
+                    const cardStyle = s.remaining <= 0
+                        ? 'background:#f3f4f6;opacity:0.65;border-left:4px solid #9ca3af;padding:12px;border-radius:6px'
+                        : 'background:#f8faff;border-left:4px solid #6366f1;padding:12px;border-radius:6px';
+                    loansHtml += '<div style="' + cardStyle + '">';
                     loansHtml += '<strong>' + l.purpose + '</strong>';
                     const giverDisplay = l.loan_giver || 'N/A';
                     const giverClickable = l.loan_giver ? '<span style="cursor:pointer;color:#2563eb;text-decoration:underline" onclick="document.getElementById(\'searchInput\').value=\''+l.loan_giver+'\';renderLoans();" title="Search for this loan giver">' + giverDisplay + '</span>' : giverDisplay;
