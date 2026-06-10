@@ -260,11 +260,12 @@
                         <button id="newRequestBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 font-semibold">+ New Request</button>
                     </div>
                     <p class="text-gray-600 mb-4">Submit loan requests from staff - Mercy Ministry Tamil Nadu</p>
-                    <div class="flex gap-3 mb-4">
+                    <div class="flex gap-3 mb-4 flex-wrap">
                         <button id="filterAllRequests" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">All</button>
                         <button id="filterPendingRequests" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Pending</button>
                         <button id="filterApprovedRequests" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Approved</button>
                         <button id="filterRejectedRequests" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Rejected</button>
+                        <button id="printRequestListBtn" class="px-4 py-2 bg-rose-400 text-white rounded-lg hover:bg-rose-500 ml-auto">📄 Print List</button>
                     </div>
                 </div>
                 <div id="requestsContainer"></div>
@@ -604,9 +605,13 @@
                 snapshot.docs.forEach(doc => {
                     chfRates[doc.data().year] = doc.data().rate;
                 });
-                if (document.getElementById('settingsView').classList.contains('hidden') === false) {
-                    renderSettings();
-                }
+                setTimeout(() => {
+                    if (typeof renderSettings === 'function' &&
+                        document.getElementById('settingsView') &&
+                        !document.getElementById('settingsView').classList.contains('hidden')) {
+                        renderSettings();
+                    }
+                }, 100);
             }, onErr);
 
             // Listen for request changes
@@ -682,6 +687,7 @@
             document.getElementById('filterPendingRequests').onclick = () => renderRequests('pending');
             document.getElementById('filterApprovedRequests').onclick = () => renderRequests('approved');
             document.getElementById('filterRejectedRequests').onclick = () => renderRequests('rejected');
+        document.getElementById('printRequestListBtn').onclick = printRequestList;
         }
 
         async function login() {
@@ -825,7 +831,10 @@
             if (view === 'loans') renderLoans();
             if (view === 'requests') renderRequests('all');
             if (view === 'reminders') renderReminders('all');
-            if (view === 'settings') renderSettings();
+            if (view === 'settings') {
+                renderSettings();
+                setTimeout(renderSettings, 800); // retry after data loads
+            }
             if (view === 'balance') {
                 const frame = document.getElementById('balanceFrame');
                 if (frame && frame.contentWindow) {
@@ -1038,14 +1047,142 @@
                         ` : ''}
 
                         ${currentUser.role === 'admin' ? `
-                        <div class="flex gap-2 mt-2">
+                        <div class="flex gap-2 mt-2 flex-wrap items-center">
                             <button onclick="editRequest('${req.id}')" class="text-sm text-yellow-600 hover:text-yellow-800">✏️ Edit Request</button>
                             <button onclick="deleteRequest('${req.id}')" class="text-sm text-red-600 hover:text-red-800">🗑️ Delete Request</button>
+                            <button onclick="printRequest('${req.id}')" class="text-sm text-indigo-600 hover:text-indigo-800 ml-auto">🖨️ Print / PDF</button>
                         </div>
-                        ` : ''}
+                        ` : ''}`}
+                        ${currentUser.role !== 'admin' ? `
+                        <div class="flex justify-end mt-2">
+                            <button onclick="printRequest('${req.id}')" class="text-sm text-indigo-600 hover:text-indigo-800">🖨️ Print / PDF</button>
+                        </div>` : ''}
                     </div>
                 </div>`;
             }).join('');
+        }
+
+        function printRequest(requestId) {
+            const req = requests.find(r => r.id === requestId);
+            if (!req) return;
+            const sym = req.currency === 'CHF' ? 'CHF ' : req.currency === 'MXN' ? 'MXN $' : '₹';
+            const statusColor = req.status === 'approved' ? '#15803d' : req.status === 'rejected' ? '#dc2626' : '#b45309';
+            const statusBg = req.status === 'approved' ? '#dcfce7' : req.status === 'rejected' ? '#fee2e2' : '#fef3c7';
+            const date = new Date(req.submitted_date).toLocaleDateString('de-CH');
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Request - ${req.full_name||req.name}</title>
+            <style>
+                *{box-sizing:border-box;margin:0;padding:0}
+                body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff}
+                .header{background:linear-gradient(135deg,#1e1b4b,#3730a3);color:white;padding:28px 32px}
+                .header h1{font-size:22px;font-weight:700;margin-bottom:4px}
+                .header .sub{font-size:12px;opacity:.65}
+                .body{padding:28px 32px}
+                .status-badge{display:inline-block;padding:5px 16px;border-radius:20px;font-weight:700;font-size:13px;background:${statusBg};color:${statusColor};margin-bottom:20px}
+                .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+                .field label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;font-weight:600;display:block;margin-bottom:4px}
+                .field .val{font-size:14px;color:#111}
+                .field .val.big{font-size:22px;font-weight:800;color:#3730a3}
+                .box{background:#f8faff;border:1px solid #e0e7ff;border-radius:10px;padding:16px;margin-bottom:16px}
+                .box h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;font-weight:600;margin-bottom:10px}
+                .bank{font-family:monospace;font-size:13px;background:#f1f5f9;padding:10px 14px;border-radius:8px;word-break:break-all}
+                .explanation{font-size:14px;line-height:1.7;color:#374151;background:#f9fafb;border-left:4px solid #6366f1;padding:14px 18px;border-radius:0 8px 8px 0}
+                .footer{margin-top:28px;padding-top:14px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;display:flex;justify-content:space-between}
+                @page{size:A4;margin:10mm}
+                @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+            </style></head><body>
+            <div class="header">
+                <h1>📋 Financial Request Application</h1>
+                <div class="sub">Hope Association Bern &nbsp;·&nbsp; Mercy Ministry Tamil Nadu &nbsp;·&nbsp; Submitted: ${date}</div>
+            </div>
+            <div class="body">
+                <div class="status-badge">${req.status.toUpperCase()}</div>
+                <div class="grid">
+                    <div class="field"><label>Full Name</label><div class="val" style="font-size:20px;font-weight:700">${req.full_name||req.name||'—'}</div></div>
+                    <div class="field"><label>Amount Requested</label><div class="val big">${sym}${Number(req.amount).toLocaleString('en-IN')}</div></div>
+                    <div class="field"><label>Location / Ministry</label><div class="val">${req.ministry_place||'—'}</div></div>
+                    <div class="field"><label>Monthly Payback</label><div class="val">${req.monthly_payback ? sym + Number(req.monthly_payback).toLocaleString('en-IN') : '—'}</div></div>
+                    ${req.phone ? `<div class="field"><label>Phone / WhatsApp</label><div class="val">${req.phone}</div></div>` : ''}
+                    <div class="field"><label>Other Support / Resources</label><div class="val">${req.other_resources||'—'}</div></div>
+                    ${req.self_finance ? `<div class="field"><label>Self-Finance</label><div class="val">${req.self_finance}</div></div>` : ''}
+                </div>
+                ${req.bank_account ? `<div class="box"><h3>Bank Account / UPI</h3><div class="bank">${req.bank_account}</div></div>` : ''}
+                ${req.explanation ? `<div class="box"><h3>Request Explanation</h3><div class="explanation">${req.explanation}</div></div>` : ''}
+                ${req.admin_notes ? `<div class="box" style="border-color:#bfdbfe"><h3>Admin Notes</h3><div class="explanation" style="border-color:#3b82f6">${req.admin_notes}</div></div>` : ''}
+                <div class="footer">
+                    <span>Hope Association &nbsp;·&nbsp; Brunnmattstrasse 50, 3007 Bern &nbsp;·&nbsp; hopeausland-bern.ch</span>
+                    <span>ID: ${req.id}</span>
+                </div>
+            </div>
+            </body></html>`;
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            setTimeout(() => win.print(), 400);
+        }
+
+        function printRequestList() {
+            // Group by status
+            const groups = {pending: [], approved: [], rejected: []};
+            requests.forEach(r => { if (groups[r.status]) groups[r.status].push(r); });
+            const date = new Date().toLocaleDateString('de-CH');
+
+            const renderGroup = (title, list, headerColor, badgeBg, badgeColor) => {
+                if (list.length === 0) return '';
+                const total = list.reduce((s,r) => s + (parseFloat(r.amount)||0), 0);
+                const rows = list.map((r,i) => {
+                    const sym = r.currency === 'CHF' ? 'CHF ' : r.currency === 'MXN' ? 'MXN $' : '₹';
+                    const sub = new Date(r.submitted_date).toLocaleDateString('de-CH');
+                    return '<tr style="background:' + (i%2===0?'#fff':'#f8faff') + ';border-bottom:1px solid #f1f5f9">' +
+                        '<td style="padding:9px 12px;font-weight:700;color:#1e1b4b">' + (r.full_name||r.name||'—') + '</td>' +
+                        '<td style="padding:9px 12px;color:#374151">' + (r.ministry_place||'—') + '</td>' +
+                        '<td style="padding:9px 12px;font-weight:700;color:#3730a3">' + sym + Number(r.amount).toLocaleString('en-IN') + '</td>' +
+                        '<td style="padding:9px 12px;color:#374151">' + (r.monthly_payback ? sym + Number(r.monthly_payback).toLocaleString('en-IN') : '—') + '</td>' +
+                        '<td style="padding:9px 12px;color:#6b7280;font-size:11px">' + sub + '</td>' +
+                        '<td style="padding:9px 12px;color:#374151;font-size:11px;max-width:200px">' + (r.explanation||'').substring(0,80) + (r.explanation&&r.explanation.length>80?'…':'') + '</td>' +
+                    '</tr>';
+                }).join('');
+                return '<div style="margin-bottom:32px">' +
+                    '<div style="background:' + headerColor + ';color:white;padding:12px 18px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center">' +
+                        '<span style="font-size:15px;font-weight:700">' + title + '</span>' +
+                        '<span style="background:rgba(255,255,255,0.2);padding:3px 12px;border-radius:12px;font-size:12px">' + list.length + ' requests</span>' +
+                    '</div>' +
+                    '<table style="width:100%;border-collapse:collapse;box-shadow:0 1px 4px rgba(0,0,0,0.07)">' +
+                        '<thead><tr style="background:#f1f5f9">' +
+                            '<th style="padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280">Name</th>' +
+                            '<th style="padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280">Location</th>' +
+                            '<th style="padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280">Amount</th>' +
+                            '<th style="padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280">Monthly</th>' +
+                            '<th style="padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280">Date</th>' +
+                            '<th style="padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280">Explanation</th>' +
+                        '</tr></thead><tbody>' + rows + '</tbody>' +
+                    '</table></div>';
+            };
+
+            const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Loan Requests</title>' +
+                '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Segoe UI",Arial,sans-serif;color:#111;padding:24px}' +
+                '.header{background:linear-gradient(135deg,#1e1b4b,#3730a3);color:white;padding:24px 28px;border-radius:12px;margin-bottom:24px}' +
+                '.header h1{font-size:20px;font-weight:700;margin-bottom:4px}.header .sub{font-size:12px;opacity:.65}' +
+                '.stats{display:flex;gap:16px;margin-bottom:24px}' +
+                '.stat{background:#f8faff;border:1px solid #e0e7ff;border-radius:10px;padding:12px 20px;text-align:center;flex:1}' +
+                '.stat .n{font-size:22px;font-weight:800;color:#3730a3}.stat .l{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em}' +
+                '@page{size:A4;margin:8mm}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>' +
+                '<div class="header"><h1>📋 Financial Request Applications — Overview</h1>' +
+                '<div class="sub">Hope Association Bern &nbsp;·&nbsp; Generated: ' + date + '</div></div>' +
+                '<div class="stats">' +
+                    '<div class="stat"><div class="n">' + requests.length + '</div><div class="l">Total</div></div>' +
+                    '<div class="stat" style="border-color:#fcd34d"><div class="n" style="color:#b45309">' + groups.pending.length + '</div><div class="l">Pending</div></div>' +
+                    '<div class="stat" style="border-color:#86efac"><div class="n" style="color:#15803d">' + groups.approved.length + '</div><div class="l">Approved</div></div>' +
+                    '<div class="stat" style="border-color:#fca5a5"><div class="n" style="color:#dc2626">' + groups.rejected.length + '</div><div class="l">Rejected</div></div>' +
+                '</div>' +
+                renderGroup('⏳ Pending', groups.pending, '#b45309', '#fef3c7', '#92400e') +
+                renderGroup('✅ Approved', groups.approved, '#15803d', '#dcfce7', '#166534') +
+                renderGroup('❌ Rejected', groups.rejected, '#dc2626', '#fee2e2', '#991b1b') +
+                '</body></html>';
+
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            setTimeout(() => win.print(), 400);
         }
 
         async function approveRequest(requestId) {
@@ -1601,6 +1738,8 @@
 
         function renderSettings() {
             const container = document.getElementById('ratesContainer');
+            if (!container) return;
+            console.log('renderSettings called, chfRates:', JSON.stringify(chfRates));
             const sortedYears = Object.keys(chfRates).sort((a, b) => b - a);
             
             if (sortedYears.length === 0) {
