@@ -1608,35 +1608,24 @@
                 return;
             }
 
-            container.innerHTML = `
-                <table style="width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.07)">
-                    <thead>
-                        <tr style="background:#3730a3;color:white">
-                            <th style="padding:10px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Year</th>
-                            <th style="padding:10px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em">CHF → INR Rate</th>
-                            <th style="padding:10px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Inverse</th>
-                            <th style="padding:10px 16px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${sortedYears.map((year, i) => `
-                        <tr style="border-bottom:1px solid #f1f5f9;background:${i%2===0?'#fff':'#f8faff'}">
-                            <td style="padding:12px 16px;font-weight:700;color:#1e1b4b;font-size:16px">${year}</td>
-                            <td style="padding:12px 16px">
-                                <span style="background:#e0e7ff;color:#3730a3;padding:5px 14px;border-radius:20px;font-weight:700;font-size:14px">
-                                    1 CHF = ₹${Number(chfRates[year]).toLocaleString('de-CH')}
-                                </span>
-                            </td>
-                            <td style="padding:12px 16px;color:#6b7280;font-size:12px">
-                                ₹1,000 = CHF ${(1000/chfRates[year]).toFixed(2)}
-                            </td>
-                            <td style="padding:12px 16px;text-align:right">
-                                <button onclick="deleteYearRate(${year})" style="color:#dc2626;background:#fee2e2;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px">🗑 Delete</button>
-                            </td>
-                        </tr>`).join('')}
-                    </tbody>
-                </table>
-            `;
+            let rowsHtml = '';
+            sortedYears.forEach((year, i) => {
+                const bg = i % 2 === 0 ? '#fff' : '#f8faff';
+                const rate = Number(chfRates[year]);
+                rowsHtml += '<tr style="border-bottom:1px solid #f1f5f9;background:' + bg + '">' +
+                    '<td style="padding:12px 16px;font-weight:700;color:#1e1b4b;font-size:16px">' + year + '</td>' +
+                    '<td style="padding:12px 16px"><span style="background:#e0e7ff;color:#3730a3;padding:5px 14px;border-radius:20px;font-weight:700;font-size:14px">1 CHF = ₹' + rate.toLocaleString('de-CH') + '</span></td>' +
+                    '<td style="padding:12px 16px;color:#6b7280;font-size:12px">₹1,000 = CHF ' + (1000/rate).toFixed(2) + '</td>' +
+                    '<td style="padding:12px 16px;text-align:right"><button onclick="deleteYearRate(' + year + ')" style="color:#dc2626;background:#fee2e2;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px">🗑 Delete</button></td>' +
+                    '</tr>';
+            });
+            container.innerHTML = '<table style="width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.07)">' +
+                '<thead><tr style="background:#3730a3;color:white">' +
+                '<th style="padding:10px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Year</th>' +
+                '<th style="padding:10px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em">CHF → INR Rate</th>' +
+                '<th style="padding:10px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Inverse</th>' +
+                '<th style="padding:10px 16px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Action</th>' +
+                '</tr></thead><tbody>' + rowsHtml + '</tbody></table>';
         }
 
         function fmtNum(n) { return Math.abs(n) < 0.5 ? 0 : Math.round(n); }
@@ -1900,7 +1889,16 @@
                     const statusColor = isOnTrack ? 'text-green-600' : 'text-red-600';
                     const statusText = isOnTrack ? '✓ On Track' : '⚠ Behind Schedule';
 
-                    const cardStyle = s.remaining <= 0
+                    // Always compare in native currency to avoid exchange rate drift
+                    let effectiveRemaining;
+                    if (l.currency === 'MXN') {
+                        effectiveRemaining = s.remaining; // getStats already returns MXN native
+                    } else if (showInNative) {
+                        effectiveRemaining = l.amount - nativePaid; // CHF native
+                    } else {
+                        effectiveRemaining = s.remaining; // INR
+                    }
+                    const cardStyle = effectiveRemaining <= 0
                         ? 'background:#f3f4f6;opacity:0.65;border-left:4px solid #9ca3af;padding:12px;border-radius:6px'
                         : 'background:#f8faff;border-left:4px solid #6366f1;padding:12px;border-radius:6px';
                     loansHtml += '<div style="' + cardStyle + '">';
@@ -1918,7 +1916,7 @@
                     loansHtml += paymentHistory;
                     loansHtml += '<div class="mt-2 flex gap-2 flex-wrap">';
                     
-                    const isPaidInFull = s.remaining <= 0;
+                    const isPaidInFull = effectiveRemaining <= 0;
                     
                     if (isPaidInFull) {
                         loansHtml += '<button disabled class="bg-gray-300 text-gray-500 px-4 py-1 rounded text-sm cursor-not-allowed">Record Payment</button>';
