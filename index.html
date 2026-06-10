@@ -671,6 +671,7 @@
             document.getElementById('filterStatus').onchange = renderLoans;
             document.getElementById('clearFilters').onclick = clearFilters;
             document.getElementById('addRateBtn').onclick = addYearRate;
+            renderSettings();
             document.getElementById('exportFilteredBtn').onclick = exportFilteredLoans;
             document.getElementById('reminderPrevMonth').onclick = () => { reminderMonth.setMonth(reminderMonth.getMonth() - 1); renderReminders(); };
             document.getElementById('reminderNextMonth').onclick = () => { reminderMonth.setMonth(reminderMonth.getMonth() + 1); renderReminders(); };
@@ -1603,42 +1604,54 @@
             const container = document.getElementById('ratesContainer');
             const sortedYears = Object.keys(chfRates).sort((a, b) => b - a);
             
-            container.innerHTML = sortedYears.map(year => 
-                `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded">
-                    <div class="flex-1"><strong>${year}:</strong> 1 CHF = ₹${chfRates[year]}</div>
-                    <button onclick="deleteYearRate(${year})" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
-                </div>`
-            ).join('');
+            if (sortedYears.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm italic">No rates defined yet.</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table style="width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.07)">
+                    <thead>
+                        <tr style="background:#3730a3;color:white">
+                            <th style="padding:10px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Year</th>
+                            <th style="padding:10px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em">CHF → INR Rate</th>
+                            <th style="padding:10px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Inverse</th>
+                            <th style="padding:10px 16px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedYears.map((year, i) => `
+                        <tr style="border-bottom:1px solid #f1f5f9;background:${i%2===0?'#fff':'#f8faff'}">
+                            <td style="padding:12px 16px;font-weight:700;color:#1e1b4b;font-size:16px">${year}</td>
+                            <td style="padding:12px 16px">
+                                <span style="background:#e0e7ff;color:#3730a3;padding:5px 14px;border-radius:20px;font-weight:700;font-size:14px">
+                                    1 CHF = ₹${Number(chfRates[year]).toLocaleString('de-CH')}
+                                </span>
+                            </td>
+                            <td style="padding:12px 16px;color:#6b7280;font-size:12px">
+                                ₹1,000 = CHF ${(1000/chfRates[year]).toFixed(2)}
+                            </td>
+                            <td style="padding:12px 16px;text-align:right">
+                                <button onclick="deleteYearRate(${year})" style="color:#dc2626;background:#fee2e2;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px">🗑 Delete</button>
+                            </td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            `;
         }
+
+        function fmtNum(n) { return Math.abs(n) < 0.5 ? 0 : Math.round(n); }
 
         function getStats(loan) {
             const lp = payments.filter(p => p.loan_id === loan.id);
-            
-            if (loan.currency === 'MXN') {
-                // MXN loans: work entirely in MXN (no INR conversion)
-                let paid = 0;
-                lp.forEach(p => {
-                    if (p.original_amount && p.payment_currency === 'MXN') {
-                        paid += p.original_amount;
-                    } else if (p.payment_currency === 'MXN') {
-                        paid += p.amount;
-                    } else {
-                        paid += p.original_amount || p.amount; // fallback
-                    }
-                });
-                const remaining = loan.amount - paid;
-                const progress = loan.amount > 0 ? (paid / loan.amount) * 100 : 0;
-                return {paid, remaining, progress, count: lp.length, currency: 'MXN'};
-            }
-            
-            // INR and CHF loans: work in INR
             const paid = lp.reduce((s, p) => s + p.amount, 0);
             const rate = getChfRate(loan.date);
             const loanAmount = loan.currency === 'INR' ? loan.amount : loan.amount * rate;
             const remaining = loanAmount - paid;
             const progress = (paid / loanAmount) * 100;
             
-            return {paid, remaining, progress, count: lp.length, currency: loan.currency === 'INR' ? 'INR' : 'CHF'};
+            const remainingClean = Math.abs(remaining) < 0.5 ? 0 : remaining;
+            return {paid, remaining: remainingClean, progress, count: lp.length};
         }
 
         function populateYearFilter() {
@@ -1773,11 +1786,7 @@
                     }
                 });
 
-                // For MXN-only borrowers, use native totals for progress
-                const isMXNOnly = nativeCurrency === 'MXN' && totalBorrowed === 0;
-                const prog = isMXNOnly
-                    ? (totalBorrowedNative > 0 ? (totalPaidNative / totalBorrowedNative) * 100 : 0)
-                    : (totalBorrowed > 0 ? (totalPaid / totalBorrowed) * 100 : 0);
+                const prog = (totalPaid / totalBorrowed) * 100;
                 let loansHtml = '';
 
                 bLoans.forEach((l, i) => {
@@ -1825,7 +1834,7 @@
                     
                     // Determine display currency: if loan currency matches monthly payment currency, show in that currency
                     const mpCur = l.monthly_payment_currency || 'INR';
-                    const showInNative = l.currency === 'MXN' || (l.currency !== 'INR' && l.currency === mpCur);
+                    const showInNative = (l.currency !== 'INR' && l.currency === mpCur);
                     const curSymbol = l.currency === 'CHF' ? 'CHF ' : l.currency === 'MXN' ? 'MXN $' : '₹';
                     
                     // For native currency display, sum original_amount from payments where available
@@ -1858,20 +1867,20 @@
                     let displayAmount, displayPaid, displayRemaining, displayExpBal;
                     if (showInNative) {
                         const nativeRemaining = l.amount - nativePaid;
-                        displayAmount = curSymbol + l.amount.toLocaleString('en-US');
-                        displayPaid = curSymbol + Math.round(nativePaid).toLocaleString('en-US');
-                        displayRemaining = curSymbol + Math.round(nativeRemaining).toLocaleString('en-US');
+                        displayAmount = curSymbol + l.amount.toLocaleString();
+                        displayPaid = curSymbol + Math.round(nativePaid).toLocaleString();
+                        displayRemaining = curSymbol + fmtNum(nativeRemaining).toLocaleString();
                         displayExpBal = curSymbol + Math.round(expectedBalanceNative).toLocaleString();
                     } else if (l.currency !== 'INR') {
                         // Loan in CHF/MXN but repayment in INR: show both
                         displayAmount = curSymbol + l.amount.toLocaleString() + ' (₹' + loanAmountINR.toLocaleString('en-IN') + ')';
                         displayPaid = '₹' + s.paid.toLocaleString('en-IN') + ' (' + curSymbol + Math.round(s.paid / rate).toLocaleString() + ')';
-                        displayRemaining = '₹' + s.remaining.toLocaleString('en-IN') + ' (' + curSymbol + Math.round(s.remaining / rate).toLocaleString() + ')';
+                        displayRemaining = '₹' + fmtNum(s.remaining).toLocaleString('en-IN') + ' (' + curSymbol + fmtNum(s.remaining / rate).toLocaleString() + ')';
                         displayExpBal = '₹' + expectedBalanceINR.toLocaleString('en-IN');
                     } else {
                         displayAmount = '₹' + l.amount.toLocaleString('en-IN');
                         displayPaid = '₹' + s.paid.toLocaleString('en-IN');
-                        displayRemaining = '₹' + s.remaining.toLocaleString('en-IN');
+                        displayRemaining = '₹' + fmtNum(s.remaining).toLocaleString('en-IN');
                         displayExpBal = '₹' + expectedBalanceINR.toLocaleString('en-IN');
                     }
                     
@@ -1936,7 +1945,7 @@
                             <div>
                                 <h2 class="text-xl font-bold">${name}</h2>
                                 <p class="text-sm">${prog.toFixed(1)}% paid</p>
-                                <p>${isMXNOnly ? 'MXN $' + totalBorrowedNative.toLocaleString('en-US') + ' | Paid: MXN $' + Math.round(totalPaidNative).toLocaleString('en-US') : 'Borrowed: ' + (hasNonINR ? nativeCurrency + ' ' + totalBorrowedNative.toLocaleString('en-US') + ' / ' : '') + '₹' + totalBorrowed.toLocaleString('en-IN') + ' | Paid: ' + (hasNonINR ? nativeCurrency + ' ' + Math.round(totalPaidNative).toLocaleString('en-US') + ' / ' : '') + '₹' + totalPaid.toLocaleString('en-IN')}</p>
+                                <p>Borrowed: ${hasNonINR ? nativeCurrency + ' ' + totalBorrowedNative.toLocaleString() + ' / ' : ''}₹${totalBorrowed.toLocaleString('en-IN')} | Paid: ${hasNonINR ? nativeCurrency + ' ' + Math.round(totalPaidNative).toLocaleString() + ' / ' : ''}₹${totalPaid.toLocaleString('en-IN')}</p>
                             </div>
                             <div class="flex gap-2">
                                 <button onclick="generatePrintDocument('${escapedName}')" class="bg-white text-indigo-600 px-3 py-1 rounded text-sm hover:bg-indigo-50 font-semibold">📄 Print/PDF</button>
@@ -2103,19 +2112,9 @@
                 const mpCurSym = (loan.monthly_payment_currency === 'CHF' ? 'CHF ' : loan.monthly_payment_currency === 'MXN' ? 'MXN $' : '₹');
                 
                 // Display amounts in loan's native currency where possible
-                const displayLoanAmt = loan.currency !== 'INR' ? loanCurSym + loan.amount.toLocaleString('en-US') : '₹' + amountInINR.toLocaleString('en-IN');
-                let displayPaid, displayRemaining;
-                if (loan.currency === 'MXN') {
-                    // MXN: stats already in MXN native
-                    displayPaid = loanCurSym + Math.round(stats.paid).toLocaleString('en-US');
-                    displayRemaining = loanCurSym + Math.round(stats.remaining).toLocaleString('en-US');
-                } else if (loan.currency === 'CHF') {
-                    displayPaid = loanCurSym + (stats.paid / rate).toLocaleString('en-US');
-                    displayRemaining = loanCurSym + (stats.remaining / rate).toLocaleString('en-US');
-                } else {
-                    displayPaid = '₹' + stats.paid.toLocaleString('en-IN');
-                    displayRemaining = '₹' + stats.remaining.toLocaleString('en-IN');
-                }
+                const displayLoanAmt = loan.currency !== 'INR' ? loanCurSym + loan.amount.toLocaleString('en-IN') : '₹' + amountInINR.toLocaleString('en-IN');
+                const displayPaid = loan.currency !== 'INR' ? loanCurSym + (stats.paid / (loan.currency === 'CHF' ? rate : 1)).toLocaleString('en-IN') : '₹' + stats.paid.toLocaleString('en-IN');
+                const displayRemaining = loan.currency !== 'INR' ? loanCurSym + fmtNum(stats.remaining / (loan.currency === 'CHF' ? rate : 1)).toLocaleString('en-IN') : '₹' + fmtNum(stats.remaining).toLocaleString('en-IN');
 
                 return `<div class="bg-white rounded-lg shadow mb-4 border-l-4 border-yellow-400">
                     <div class="p-4">
@@ -2134,7 +2133,7 @@
                             </div>
                             <div>
                                 <p class="text-gray-600">Monthly Payment:</p>
-                                <p class="font-semibold">${mpCurSym}${loan.monthly_payment.toLocaleString(loan.currency === 'MXN' ? 'en-US' : 'en-IN')}</p>
+                                <p class="font-semibold">${mpCurSym}${loan.monthly_payment.toLocaleString('en-IN')}</p>
                             </div>
                             <div>
                                 <p class="text-gray-600">Total Paid:</p>
@@ -2726,7 +2725,7 @@
                 if (collectorFilter && l.collector !== collectorFilter) return false;
                 if (currencyFilter && l.currency !== currencyFilter) return false;
                 if (purposeFilter && l.purpose !== purposeFilter) return false;
-                if (loanGiverFilter && !(l.loan_giver || '').trim().toLowerCase().includes(loanGiverFilter)) return false;
+                if (loanGiverFilter && (l.loan_giver || '').trim().toLowerCase() !== loanGiverFilter) return false;
                 if (statusFilter) {
                     const s = getStats(l);
                     if (statusFilter === 'active' && s.remaining <= 0) return false;
