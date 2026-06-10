@@ -1908,7 +1908,11 @@
                     }
                 });
 
-                const prog = (totalPaid / totalBorrowed) * 100;
+                // MXN-only borrower: show native MXN totals instead of INR
+                const isMXNOnly = hasNonINR && nativeCurrency === 'MXN';
+                const prog = isMXNOnly
+                    ? (totalBorrowedNative > 0 ? (totalPaidNative / totalBorrowedNative) * 100 : 0)
+                    : (totalBorrowed > 0 ? (totalPaid / totalBorrowed) * 100 : 0);
                 let loansHtml = '';
 
                 bLoans.forEach((l, i) => {
