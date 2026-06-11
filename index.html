@@ -2052,9 +2052,23 @@
                     // Always compare in native currency to avoid exchange rate drift
                     let effectiveRemaining;
                     if (l.currency === 'MXN') {
-                        effectiveRemaining = s.remaining; // getStats already returns MXN native
-                    } else if (showInNative) {
-                        effectiveRemaining = l.amount - nativePaid; // CHF native
+                        effectiveRemaining = s.remaining; // MXN native from getStats
+                    } else if (l.currency === 'CHF') {
+                        // Always use CHF native to avoid exchange rate drift
+                        const lp2 = payments.filter(p => p.loan_id === l.id);
+                        let chfPaid = 0;
+                        lp2.forEach(p => {
+                            if (p.payment_currency === 'CHF' && p.original_amount) {
+                                chfPaid += p.original_amount;
+                            } else if (p.is_forgiven && p.original_amount && p.payment_currency === 'CHF') {
+                                chfPaid += p.original_amount;
+                            } else {
+                                // INR payment on CHF loan: convert back
+                                const pRate = getChfRate(p.date || l.date);
+                                chfPaid += pRate > 0 ? p.amount / pRate : 0;
+                            }
+                        });
+                        effectiveRemaining = l.amount - chfPaid;
                     } else {
                         effectiveRemaining = s.remaining; // INR
                     }
