@@ -1876,7 +1876,7 @@
                     if (l.collector !== 'Irina') return false;
                 }
                 
-                if (searchTerm && !l.borrower_name.toLowerCase().includes(searchTerm) && !(l.loan_giver || '').toLowerCase().includes(searchTerm)) return false;
+                if (searchTerm && !l.borrower_name.toLowerCase().includes(searchTerm) && !(l.loan_giver || '').toLowerCase().includes(searchTerm) && !(l.purpose || '').toLowerCase().includes(searchTerm) && !(l.comments || '').toLowerCase().includes(searchTerm)) return false;
                 if (filterYear && new Date(l.date).getFullYear().toString() !== filterYear) return false;
                 if (filterCollector && l.collector !== filterCollector) return false;
                 if (filterPurpose && l.purpose !== filterPurpose) return false;
@@ -2873,7 +2873,7 @@
             if (!loans || loans.length === 0) { alert('No loans loaded yet.'); return; }
             
             const filtered = loans.filter(l => {
-                if (searchTerm && !l.borrower_name.toLowerCase().includes(searchTerm) && !(l.loan_giver || '').toLowerCase().includes(searchTerm)) return false;
+                if (searchTerm && !l.borrower_name.toLowerCase().includes(searchTerm) && !(l.loan_giver || '').toLowerCase().includes(searchTerm) && !(l.purpose || '').toLowerCase().includes(searchTerm) && !(l.comments || '').toLowerCase().includes(searchTerm)) return false;
                 if (yearFilter && new Date(l.date).getFullYear().toString() !== yearFilter) return false;
                 if (collectorFilter && l.collector !== collectorFilter) return false;
                 if (currencyFilter && l.currency !== currencyFilter) return false;
