@@ -2055,11 +2055,10 @@
                         effectiveRemaining = s.remaining;
                     } else if (l.currency === 'CHF') {
                         effectiveRemaining = l.amount - nativePaid;
-                        if (l.borrower_name && l.borrower_name.includes('168')) console.log('LOAN168 debug: amount='+l.amount+' nativePaid='+nativePaid+' effectiveRemaining='+effectiveRemaining+' showInNative='+showInNative);
                     } else {
                         effectiveRemaining = s.remaining; // INR
                     }
-                    const cardStyle = effectiveRemaining <= 0
+                    const cardStyle = effectiveRemaining <= 1
                         ? 'background:#f3f4f6;opacity:0.65;border-left:4px solid #9ca3af;padding:12px;border-radius:6px'
                         : 'background:#f8faff;border-left:4px solid #6366f1;padding:12px;border-radius:6px';
                     loansHtml += '<div style="' + cardStyle + '">';
@@ -2077,7 +2076,7 @@
                     loansHtml += paymentHistory;
                     loansHtml += '<div class="mt-2 flex gap-2 flex-wrap">';
                     
-                    const isPaidInFull = effectiveRemaining <= 0;
+                    const isPaidInFull = effectiveRemaining <= 1;
                     
                     if (isPaidInFull) {
                         loansHtml += '<button disabled class="bg-gray-300 text-gray-500 px-4 py-1 rounded text-sm cursor-not-allowed">Record Payment</button>';
