@@ -392,6 +392,7 @@
                     <p class="text-sm text-gray-600 mb-4">Set average CHF to INR rate per year</p>
                     <div id="ratesContainer" class="space-y-3 mb-4"></div>
                     <button id="addRateBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Add Year Rate</button>
+                    <button id="restoreRatesBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">🔄 Restore Correct Rates</button>
                 </div>
             </div>
             <!-- Balance View -->
@@ -676,6 +677,27 @@
             document.getElementById('filterStatus').onchange = renderLoans;
             document.getElementById('clearFilters').onclick = clearFilters;
             document.getElementById('addRateBtn').onclick = addYearRate;
+            document.getElementById('restoreRatesBtn').onclick = async () => {
+                if (!confirm('This will delete all current rates and restore the correct historical rates (2019-2026). Continue?')) return;
+                const btn = document.getElementById('restoreRatesBtn');
+                btn.textContent = 'Restoring...';
+                btn.disabled = true;
+                try {
+                    const snap = await getDocs(collection(db, 'chfRates'));
+                    for (const d of snap.docs) await deleteDoc(doc(db, 'chfRates', d.id));
+                    const correctRates = {2019:71, 2020:79, 2021:81, 2022:82, 2023:92, 2024:95, 2025:105, 2026:110};
+                    for (const [year, rate] of Object.entries(correctRates)) {
+                        await addDoc(collection(db, 'chfRates'), {year: parseInt(year), rate});
+                    }
+                    btn.textContent = '✅ Done!';
+                    setTimeout(() => { btn.textContent = '🔄 Restore Correct Rates'; btn.disabled = false; }, 3000);
+                    renderSettings();
+                } catch(e) {
+                    alert('Error: ' + e.message);
+                    btn.textContent = '🔄 Restore Correct Rates';
+                    btn.disabled = false;
+                }
+            };
             document.getElementById('exportFilteredBtn').onclick = exportFilteredLoans;
             document.getElementById('reminderPrevMonth').onclick = () => { reminderMonth.setMonth(reminderMonth.getMonth() - 1); renderReminders(); };
             document.getElementById('reminderNextMonth').onclick = () => { reminderMonth.setMonth(reminderMonth.getMonth() + 1); renderReminders(); };
@@ -1734,10 +1756,11 @@
         function renderSettings() {
             const container = document.getElementById('ratesContainer');
             if (!container) return;
-            console.log('renderSettings called, chfRates:', JSON.stringify(chfRates));
-            // Fallback to defaults if not yet loaded
+            // If rates not loaded yet, show loading and retry (do NOT overwrite real data)
             if (!chfRates || Object.keys(chfRates).length === 0) {
-                chfRates = {2024: 110, 2025: 110, 2026: 110};
+                container.innerHTML = '<p class="text-gray-400 text-sm italic">Loading rates…</p>';
+                setTimeout(renderSettings, 600);
+                return;
             }
             const sortedYears = Object.keys(chfRates).sort((a, b) => b - a);
 
