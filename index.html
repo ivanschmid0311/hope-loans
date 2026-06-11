@@ -1987,7 +1987,7 @@
                     
                     // For native currency display, sum original_amount from payments where available
                     let nativePaid = 0;
-                    if (showInNative) {
+                    if (showInNative || l.currency === 'CHF') {
                         const lp = payments.filter(p => p.loan_id === l.id);
                         lp.forEach(p => {
                             if (p.original_amount && p.payment_currency === l.currency) {
@@ -2054,23 +2054,8 @@
                     if (l.currency === 'MXN') {
                         effectiveRemaining = s.remaining;
                     } else if (l.currency === 'CHF') {
-                        // If showInNative is true, nativePaid is already calculated correctly
-                        // If not, convert all payments to CHF using their date rates
-                        if (showInNative) {
-                            effectiveRemaining = l.amount - nativePaid;
-                        } else {
-                            const lp2 = payments.filter(p => p.loan_id === l.id);
-                            let chfPaid = 0;
-                            lp2.forEach(p => {
-                                const pRate = getChfRate(p.date || l.date);
-                                if (p.payment_currency === 'CHF' && p.original_amount) {
-                                    chfPaid += p.original_amount;
-                                } else if (p.amount && pRate > 0) {
-                                    chfPaid += p.amount / pRate;
-                                }
-                            });
-                            effectiveRemaining = Math.round((l.amount - chfPaid) * 100) / 100;
-                        }
+                        // nativePaid is always calculated for CHF loans (see above)
+                        effectiveRemaining = l.amount - nativePaid;
                     } else {
                         effectiveRemaining = s.remaining; // INR
                     }
