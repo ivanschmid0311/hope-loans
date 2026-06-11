@@ -2054,8 +2054,8 @@
                     if (l.currency === 'MXN') {
                         effectiveRemaining = s.remaining;
                     } else if (l.currency === 'CHF') {
-                        // nativePaid is always calculated for CHF loans (see above)
                         effectiveRemaining = l.amount - nativePaid;
+                        if (l.borrower_name && l.borrower_name.includes('168')) console.log('LOAN168 debug: amount='+l.amount+' nativePaid='+nativePaid+' effectiveRemaining='+effectiveRemaining+' showInNative='+showInNative);
                     } else {
                         effectiveRemaining = s.remaining; // INR
                     }
