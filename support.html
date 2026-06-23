@@ -264,15 +264,7 @@
 
         // Update stats
         function updateStats() {
-            const families = recipients.filter(r => r.type === 'Family').length;
-            const singles = recipients.filter(r => r.type === 'Single').length;
-            const monthlyTotalCHF = recipients.filter(r => r.currency !== 'INR').reduce((sum, r) => sum + (r.monthly_amount || 0), 0);
-            const monthlyTotalINR = recipients.filter(r => r.currency === 'INR').reduce((sum, r) => sum + (r.monthly_amount || 0), 0);
-
-            document.getElementById('totalRecipients').textContent = recipients.length;
-            document.getElementById('totalFamilies').textContent = families;
-            document.getElementById('totalSingles').textContent = singles;
-            document.getElementById('monthlyTotal').innerHTML = 'CHF ' + monthlyTotalCHF.toLocaleString('de-CH') + (monthlyTotalINR > 0 ? '<br><span style="font-size:14px">+ ₹' + monthlyTotalINR.toLocaleString('en-IN') + '</span>' : '');
+            // Stats are now updated in renderRecipients based on filtered list
         }
 
         // Populate team filter
@@ -308,7 +300,7 @@
             const filterSwiss = document.getElementById('filterSwiss').value;
 
             let filtered = recipients.filter(r => {
-                if (searchTerm && !r.name.toLowerCase().includes(searchTerm)) return false;
+                if (searchTerm && !r.name.toLowerCase().includes(searchTerm) && !(r.bank_account || r.account_number || '').toLowerCase().includes(searchTerm)) return false;
                 if (filterType && r.type !== filterType) return false;
                 if (currentOrgFilter && (r.organization || 'Hope') !== currentOrgFilter) return false;
                 if (filterTeam && r.team !== filterTeam) return false;
@@ -317,6 +309,16 @@
             });
 
             console.log('Filtered recipients:', filtered.length);
+
+            // Update stats based on filtered list
+            const filtFamilies = filtered.filter(r => r.type === 'Family').length;
+            const filtSingles = filtered.filter(r => r.type === 'Single').length;
+            const filtCHF = filtered.filter(r => r.currency !== 'INR').reduce((sum, r) => sum + (r.monthly_amount || 0), 0);
+            const filtINR = filtered.filter(r => r.currency === 'INR').reduce((sum, r) => sum + (r.monthly_amount || 0), 0);
+            document.getElementById('totalRecipients').textContent = filtered.length;
+            document.getElementById('totalFamilies').textContent = filtFamilies;
+            document.getElementById('totalSingles').textContent = filtSingles;
+            document.getElementById('monthlyTotal').innerHTML = 'CHF ' + filtCHF.toLocaleString('de-CH') + (filtINR > 0 ? '<br><span style="font-size:14px">+ ₹' + filtINR.toLocaleString('en-IN') + '</span>' : '');
 
             // Sort by name
             filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -457,7 +459,7 @@
             const filterTeam = document.getElementById('filterTeam').value;
             const filterSwiss = document.getElementById('filterSwiss').value;
             return recipients.filter(r => {
-                if (searchTerm && !r.name.toLowerCase().includes(searchTerm)) return false;
+                if (searchTerm && !r.name.toLowerCase().includes(searchTerm) && !(r.bank_account || r.account_number || '').toLowerCase().includes(searchTerm)) return false;
                 if (filterType && r.type !== filterType) return false;
                 if (currentOrgFilter && (r.organization || 'Hope') !== currentOrgFilter) return false;
                 if (filterTeam && r.team !== filterTeam) return false;
