@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hope Association – Loan Request</title>
+<title>Hope Association – Request for Support</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -250,16 +250,16 @@
 </div>
 
 <div class="hero">
-  <h2>Loan Request Form</h2>
-  <p>Please fill in all the details below. Your request will be reviewed by the Hope team and you will be contacted directly.</p>
+  <h2>Request for Support</h2>
+  <p>Hope Association provides <strong>interest-free</strong> support advances to people in need, so they can build a livelihood and stand on their own feet. No interest is charged and we make no profit — every contribution paid back goes straight into the fund to help the next person. Please fill in all details below. Your request will be reviewed by the Hope team and you will be contacted directly.</p>
 </div>
 
 <div class="container">
 
   <div id="closedNotice" style="display:none;background:#fff7ed;border:1px solid #fdba74;border-left:5px solid #ea580c;border-radius:14px;padding:22px 24px;margin-bottom:24px;">
-    <h3 style="font-family:'Lora',serif;font-size:1.15rem;color:#9a3412;margin-bottom:8px;">⚠️ Currently not accepting new loan requests</h3>
+    <h3 style="font-family:'Lora',serif;font-size:1.15rem;color:#9a3412;margin-bottom:8px;">⚠️ Currently not accepting new requests</h3>
     <p style="font-size:0.95rem;line-height:1.6;color:#7c2d12;">
-      Due to limited funds, Hope Association is <strong>not accepting new loan applications until 31 December 2026</strong>.
+      Due to limited funds, Hope Association is <strong>not accepting new requests for support until 31 December 2026</strong>.
       Please submit your request from January 2027 onwards. Thank you for your understanding.
     </p>
   </div>
@@ -293,17 +293,17 @@
       </div>
     </div>
 
-    <!-- 2. Loan Details -->
+    <!-- 2. Request Details -->
     <div class="section">
       <div class="section-header">
         <span class="icon">💰</span>
-        <h3>Loan Details</h3>
+        <h3>Details of Your Request</h3>
       </div>
       <div class="section-body">
         <div class="field" id="f-purpose" style="margin-bottom:16px">
           <label>Purpose / Explanation <span class="req">*</span></label>
-          <textarea id="purpose" placeholder="Describe what the loan is for and why you need it…"></textarea>
-          <span class="field-error">Please describe the purpose of the loan.</span>
+          <textarea id="purpose" placeholder="Describe what the support is for and why you need it…"></textarea>
+          <span class="field-error">Please describe the purpose of your request.</span>
         </div>
 
         <div class="amount-row" style="margin-bottom:16px">
@@ -323,10 +323,10 @@
         </div>
 
         <div class="field" id="f-monthly">
-          <label>Monthly Repayment Amount <span class="req">*</span></label>
-          <input type="number" id="monthly" min="0" placeholder="How much can you pay back per month?" />
-          <span class="hint">Same currency as above. This helps us assess the loan duration.</span>
-          <span class="field-error">Please enter a monthly repayment amount.</span>
+          <label>Monthly Contribution to the Fund <span class="req">*</span></label>
+          <input type="number" id="monthly" min="0" placeholder="How much can you contribute back per month?" />
+          <span class="hint">Same currency as above. Interest-free — you only return the amount received. This helps us plan the fund.</span>
+          <span class="field-error">Please enter a monthly contribution amount.</span>
         </div>
       </div>
     </div>
@@ -339,8 +339,8 @@
       </div>
       <div class="section-body">
         <div class="field" style="margin-bottom:16px" id="f-existing">
-          <label>Existing Loans or Financial Support</label>
-          <textarea id="existing" placeholder="Do you currently have any other loans or financial support? From whom, and how much? (Write 'None' if not applicable)"></textarea>
+          <label>Existing Debts or Financial Support</label>
+          <textarea id="existing" placeholder="Do you currently have any other debts or financial support? From whom, and how much? (Write 'None' if not applicable)"></textarea>
           <span class="hint">Be transparent — this helps us make a fair decision.</span>
         </div>
         <div class="field" id="f-selfFinance">
@@ -360,7 +360,7 @@
       </div>
       <div class="section-body">
         <div class="info-box">
-          ℹ️ Please provide your bank details so that Hope Association can transfer the loan directly to your account if approved.
+          ℹ️ Please provide your bank details so that Hope Association can transfer the support amount directly to your account if approved.
         </div>
         <div class="grid-2" style="gap:16px; margin-bottom:16px">
           <div class="field" id="f-accountName">
@@ -394,7 +394,7 @@
 
     <div class="submit-wrap">
       <button class="btn-submit" id="submitBtn" onclick="submitRequest()">
-        Submit Loan Request
+        Submit Request
       </button>
     </div>
 
@@ -403,7 +403,7 @@
   <div id="successScreen">
     <div class="check">✅</div>
     <h2>Request Submitted!</h2>
-    <p>Thank you. Your loan request has been received by the Hope Association team. We will review it and contact you as soon as possible.</p>
+    <p>Thank you. Your request has been received by the Hope Association team. We will review it and contact you as soon as possible.</p>
   </div>
 
 </div><!-- /container -->
@@ -452,7 +452,7 @@ function validate(id, fieldId) {
 
 window.submitRequest = async function() {
   if (requestsClosed) {
-    alert('Hope Association is not accepting new loan requests until January 2027. Thank you for your understanding.');
+    alert('Hope Association is not accepting new requests for support until January 2027. Thank you for your understanding.');
     return;
   }
 
@@ -509,7 +509,7 @@ window.submitRequest = async function() {
   } catch (err) {
     console.error(err);
     btn.disabled = false;
-    btn.innerHTML = 'Submit Loan Request';
+    btn.innerHTML = 'Submit Request';
     alert('Something went wrong. Please try again or contact Hope Association directly.');
   }
 };
