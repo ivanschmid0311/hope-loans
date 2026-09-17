@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hope Association - Loan Management v12</title>
+    <title>Hope Association – Support Fund Administration v12</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
@@ -148,7 +148,7 @@
         <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold text-indigo-900">Hope Association</h1>
-                <p class="text-gray-600 mt-2">Loan Management System</p>
+                <p class="text-gray-600 mt-2">Support Fund Administration</p>
             </div>
             <div class="space-y-4">
                 <div>
@@ -173,13 +173,13 @@
                         <h1 class="text-2xl font-bold text-indigo-900">Hope Association</h1>
                     </div>
                     <div class="flex gap-6">
-                        <button id="navLoans" data-nav class="px-4 py-2 hover:text-indigo-600">Loans</button>
+                        <button id="navLoans" data-nav class="px-4 py-2 hover:text-indigo-600">Advances</button>
                         <button id="navRequests" data-nav class="px-4 py-2 hover:text-indigo-600">Requests</button>
-                        <button id="navReminders" data-nav class="px-4 py-2 hover:text-indigo-600">Payment Reminders</button>
+                        <button id="navReminders" data-nav class="px-4 py-2 hover:text-indigo-600">Monthly Follow-up</button>
                         <button id="navBalance" data-nav class="px-4 py-2 hover:text-indigo-600">Balance</button>
                         <button id="navSupport" data-nav class="px-4 py-2 hover:text-indigo-600">Support</button>
                         <button id="navGrants" onclick="window.location.href='grants.html'" class="px-4 py-2 text-orange-600 font-semibold hover:text-orange-800">📋 Grants</button>
-                        <button id="navCreate" data-nav class="px-4 py-2 hover:text-indigo-600">Create Loan</button>
+                        <button id="navCreate" data-nav class="px-4 py-2 hover:text-indigo-600">New Support Advance</button>
                         <button id="navSettings" data-nav class="px-4 py-2 hover:text-indigo-600">Settings</button>
                     </div>
                     <div class="flex items-center gap-4">
@@ -197,7 +197,7 @@
             <!-- Loans View -->
             <div id="loansView" data-view class="hidden">
                 <div class="bg-white rounded-lg shadow p-4 mb-4">
-                    <h3 class="font-bold mb-3">Search & Filter Loans</h3>
+                    <h3 class="font-bold mb-3">Search & Filter Advances</h3>
                     <!-- BUILD 2026-02-12-A -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
                         <input type="text" id="searchInput" placeholder="Search by name..." class="px-3 py-1.5 border rounded-lg text-sm">
@@ -205,7 +205,7 @@
                             <option value="">All Years</option>
                         </select>
                         <select id="filterCollector" class="px-3 py-1.5 border rounded-lg text-sm">
-                            <option value="">All Collectors</option>
+                            <option value="">All Coordinators</option>
                             <option value="Suresh">Suresh</option>
                             <option value="Edward">Edward</option>
                             <option value="Samuel">Samuel</option>
@@ -213,24 +213,24 @@
                             <option value="Ivan">Ivan</option>
                         </select>
                         <select id="filterLoanGiver" class="px-3 py-1.5 border rounded-lg text-sm">
-                            <option value="">All Loan Givers</option>
+                            <option value="">All Funding Partners</option>
                         </select>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                         <select id="filterPurpose" class="px-3 py-1.5 border rounded-lg text-sm">
                             <option value="">All Purposes</option>
-                            <option value="Business">Business</option>
+                            <option value="Business">Microenterprise / Livelihood</option>
                             <option value="Building/Construction">Building/Construction</option>
-                            <option value="House Leasing">House Leasing</option>
+                            <option value="House Leasing">Housing Deposit Support</option>
                             <option value="Education">Education</option>
-                            <option value="Real Estate">Real Estate</option>
-                            <option value="Debt Clearance">Debt Clearance</option>
-                            <option value="Vehicle">Vehicle</option>
+                            <option value="Real Estate">Land for Livelihood</option>
+                            <option value="Debt Clearance">Release from Exploitative Debt</option>
+                            <option value="Vehicle">Vehicle for Income Generation</option>
                             <option value="Medical Treatment">Medical Treatment</option>
                             <option value="Other Reason">Other Reason</option>
                         </select>
                         <select id="filterLoanGiver" class="px-4 py-2 border rounded-lg">
-                            <option value="">All Loan Givers</option>
+                            <option value="">All Funding Partners</option>
                         </select>
                         <select id="filterCurrency" class="px-3 py-1.5 border rounded-lg text-sm">
                             <option value="">All Currencies</option>
@@ -246,7 +246,7 @@
                     </div>
                     <div class="flex justify-between mt-2">
                         <button id="clearFilters" class="bg-gray-500 text-white px-3 py-1.5 rounded-lg hover:bg-gray-600 text-sm">Clear Filters</button>
-                        <button id="exportFilteredBtn" class="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 text-sm">Export Filtered Loans (Excel)</button>
+                        <button id="exportFilteredBtn" class="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 text-sm">Export Filtered Advances (Excel)</button>
                     </div>
                 </div>
                 <div id="loansContainer"></div>
@@ -259,12 +259,12 @@
                         <h2 class="text-2xl font-bold">Financial Request Applications</h2>
                         <button id="newRequestBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 font-semibold">+ New Request</button>
                     </div>
-                    <p class="text-gray-600 mb-4">Submit loan requests from staff - Mercy Ministry Tamil Nadu</p>
+                    <p class="text-gray-600 mb-4">Interest-free support advances for staff — Mercy Ministry Tamil Nadu</p>
                     <div class="flex gap-3 mb-4 flex-wrap">
                         <button id="filterAllRequests" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">All</button>
                         <button id="filterPendingRequests" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Pending</button>
                         <button id="filterApprovedRequests" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Approved</button>
-                        <button id="filterRejectedRequests" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Rejected</button>
+                        <button id="filterRejectedRequests" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Not Approved</button>
                         <button id="printRequestListBtn" class="px-4 py-2 bg-rose-400 text-white rounded-lg hover:bg-rose-500 ml-auto">📄 Print List</button>
                     </div>
                 </div>
@@ -295,7 +295,7 @@
                                 <input type="number" id="requestAmount" placeholder="Amount *" class="w-full px-4 py-2 border rounded-lg" required>
                             </div>
                         </div>
-                        <input type="number" id="requestMonthlyPayback" placeholder="Monthly Payback - leave empty if gift" class="w-full px-4 py-2 border rounded-lg">
+                        <input type="number" id="requestMonthlyPayback" placeholder="Monthly Contribution to the Fund - leave empty if gift" class="w-full px-4 py-2 border rounded-lg">
                         <textarea id="requestOtherResources" placeholder="Other Resources (optional)" rows="2" class="w-full px-4 py-2 border rounded-lg"></textarea>
                         <input type="text" id="requestBankAccount" placeholder="Bank Account / UPI *" class="w-full px-4 py-2 border rounded-lg" required>
                         <div class="flex gap-3">
@@ -309,8 +309,8 @@
             <!-- Payment Reminders View -->
             <div id="remindersView" data-view class="hidden">
                 <div class="bg-white rounded-lg shadow p-4 mb-4 sticky top-0 z-10">
-                    <h2 class="text-xl font-bold mb-1">Payment Reminders</h2>
-                    <p class="text-gray-600 text-sm mb-3">Loans requiring monthly payment confirmation</p>
+                    <h2 class="text-xl font-bold mb-1">Monthly Follow-up</h2>
+                    <p class="text-gray-600 text-sm mb-3">Support advances requiring monthly confirmation</p>
                     <div class="flex gap-3 mb-3 flex-wrap items-center">
                         <button id="reminderPrevMonth" class="px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm font-semibold">← Prev</button>
                         <span id="reminderMonthDisplay" class="text-lg font-bold text-indigo-600 min-w-[150px] text-center"></span>
@@ -328,25 +328,25 @@
             <!-- Create Loan View -->
             <div id="createView" data-view class="hidden">
                 <div class="bg-white rounded-lg shadow max-w-2xl mx-auto p-6">
-                    <h2 class="text-xl font-bold mb-4">Create New Loan</h2>
+                    <h2 class="text-xl font-bold mb-4">New Support Advance</h2>
                     <div class="space-y-4">
-                        <input type="text" id="borrowerName" placeholder="Borrower Name *" class="w-full px-4 py-2 border rounded-lg" required>
+                        <input type="text" id="borrowerName" placeholder="Recipient Name *" class="w-full px-4 py-2 border rounded-lg" required>
                         <input type="date" id="loanDate" placeholder="Date *" class="w-full px-4 py-2 border rounded-lg" required>
                       <select id="loanPurpose" class="w-full px-4 py-2 border rounded-lg" required>
     <option value="">Select Purpose *</option>
-    <option value="Business">Business</option>
+    <option value="Business">Microenterprise / Livelihood</option>
     <option value="Building/Construction">Building/Construction</option>
-    <option value="House Leasing">House Leasing</option>
+    <option value="House Leasing">Housing Deposit Support</option>
     <option value="Education">Education</option>
-    <option value="Real Estate">Real Estate</option>
-    <option value="Debt Clearance">Debt Clearance</option>
-    <option value="Vehicle">Vehicle</option>
+    <option value="Real Estate">Land for Livelihood</option>
+    <option value="Debt Clearance">Release from Exploitative Debt</option>
+    <option value="Vehicle">Vehicle for Income Generation</option>
     <option value="Medical Treatment">Medical Treatment</option>
     <option value="Other Reason">Other Reason</option>
 </select>
-                        <input type="text" id="loanGiver" placeholder="Loan Giver (optional)" class="w-full px-4 py-2 border rounded-lg">
+                        <input type="text" id="loanGiver" placeholder="Funding Partner (optional)" class="w-full px-4 py-2 border rounded-lg">
                         <select id="loanCollector" class="w-full px-4 py-2 border rounded-lg" required>
-                            <option value="">Select Collector *</option>
+                            <option value="">Select Coordinator *</option>
                             <option value="Edward">Edward</option>
                             <option value="Suresh">Suresh</option>
                             <option value="Samuel">Samuel</option>
@@ -372,7 +372,7 @@
                             <input type="date" id="firstPaymentDue" class="w-full px-4 py-2 border rounded-lg">
                         </div>
                         <textarea id="loanComments" placeholder="Comments (optional)" rows="3" class="w-full px-4 py-2 border rounded-lg"></textarea>
-                        <button id="createLoanBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">Create Loan</button>
+                        <button id="createLoanBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">Create Support Advance</button>
                     </div>
                 </div>
             </div>
@@ -1046,7 +1046,7 @@
                                 <p class="font-bold text-indigo-600 text-xl">${(req.currency === 'CHF' ? 'CHF ' : req.currency === 'MXN' ? 'MXN $' : '₹')}${req.amount.toLocaleString('en-IN')}</p>
                             </div>
                             ${req.monthly_payback ? `<div>
-                                <p class="text-gray-600 font-semibold">Monthly Payback:</p>
+                                <p class="text-gray-600 font-semibold">Monthly Contribution:</p>
                                 <p>${(req.currency === 'CHF' ? 'CHF ' : req.currency === 'MXN' ? 'MXN $' : '₹')}${req.monthly_payback.toLocaleString('en-IN')}</p>
                             </div>` : ''}
                             ${req.other_resources ? `<div>
@@ -1133,7 +1133,7 @@
                     <div class="field"><label>Full Name</label><div class="val" style="font-size:20px;font-weight:700">${req.full_name||req.name||'—'}</div></div>
                     <div class="field"><label>Amount Requested</label><div class="val big">${sym}${Number(req.amount).toLocaleString('en-IN')}</div></div>
                     <div class="field"><label>Location / Ministry</label><div class="val">${req.ministry_place||'—'}</div></div>
-                    <div class="field"><label>Monthly Payback</label><div class="val">${req.monthly_payback ? sym + Number(req.monthly_payback).toLocaleString('en-IN') : '—'}</div></div>
+                    <div class="field"><label>Monthly Contribution</label><div class="val">${req.monthly_payback ? sym + Number(req.monthly_payback).toLocaleString('en-IN') : '—'}</div></div>
                     ${req.phone ? `<div class="field"><label>Phone / WhatsApp</label><div class="val">${req.phone}</div></div>` : ''}
                     <div class="field"><label>Other Support / Resources</label><div class="val">${req.other_resources||'—'}</div></div>
                     ${req.self_finance ? `<div class="field"><label>Self-Finance</label><div class="val">${req.self_finance}</div></div>` : ''}
@@ -1205,11 +1205,11 @@
                     '<div class="stat"><div class="n">' + requests.length + '</div><div class="l">Total</div></div>' +
                     '<div class="stat" style="border-color:#fcd34d"><div class="n" style="color:#b45309">' + groups.pending.length + '</div><div class="l">Pending</div></div>' +
                     '<div class="stat" style="border-color:#86efac"><div class="n" style="color:#15803d">' + groups.approved.length + '</div><div class="l">Approved</div></div>' +
-                    '<div class="stat" style="border-color:#fca5a5"><div class="n" style="color:#dc2626">' + groups.rejected.length + '</div><div class="l">Rejected</div></div>' +
+                    '<div class="stat" style="border-color:#fca5a5"><div class="n" style="color:#dc2626">' + groups.rejected.length + '</div><div class="l">Not Approved</div></div>' +
                 '</div>' +
                 renderGroup('⏳ Pending', groups.pending, '#b45309', '#fef3c7', '#92400e') +
                 renderGroup('✅ Approved', groups.approved, '#15803d', '#dcfce7', '#166534') +
-                renderGroup('❌ Rejected', groups.rejected, '#dc2626', '#fee2e2', '#991b1b') +
+                renderGroup('❌ Not Approved', groups.rejected, '#dc2626', '#fee2e2', '#991b1b') +
                 '</body></html>';
 
             const win = window.open('', '_blank');
@@ -1313,21 +1313,21 @@
             const submitted = req.submitted_date
                 ? new Date(req.submitted_date).toLocaleDateString('en-GB') : '-';
 
-            const subject = 'Loan Request Declined: ' + (req.full_name || req.name || 'Unknown')
+            const subject = 'Support Request Not Approved: ' + (req.full_name || req.name || 'Unknown')
                 + ' - ' + curr + amount;
 
             const body =
                 'Dear Samuel, Isaac and Edward,\n\n' +
-                'The following loan request has been DECLINED:\n\n' +
+                'The following support request has NOT been approved:\n\n' +
                 'Name: ' + (req.full_name || req.name || '-') + '\n' +
                 'Ministry Place / Team: ' + (req.ministry_place || '-') + '\n' +
                 'Phone: ' + (req.phone || '-') + '\n' +
                 'Amount Requested: ' + curr + amount + '\n' +
-                'Monthly Payback: ' + monthly + '\n' +
+                'Monthly Contribution: ' + monthly + '\n' +
                 'Purpose: ' + (req.explanation || '-') + '\n' +
                 'Submitted: ' + submitted + '\n\n' +
-                'Reason for decline: ' + (reason || 'No reason provided') + '\n' +
-                'Declined by: ' + currentUser.username + '\n' +
+                'Reason: ' + (reason || 'No reason provided') + '\n' +
+                'Decided by: ' + currentUser.username + '\n' +
                 'Date: ' + new Date().toLocaleDateString('en-GB') + '\n\n' +
                 'Please inform the applicant accordingly.\n\n' +
                 'Best regards';
@@ -1414,7 +1414,7 @@
                 mpCurrencyDropdown.innerHTML = '<option value="MXN" selected>MXN ($)</option>';
             } else if (currentUser.region === 'india') {
                 collectorDropdown.innerHTML = `
-                    <option value="">Select Collector *</option>
+                    <option value="">Select Coordinator *</option>
                     <option value="Edward">Edward</option>
                     <option value="Suresh">Suresh</option>
                     <option value="Samuel">Samuel</option>
@@ -1432,7 +1432,7 @@
             } else {
                 // Default / Ivan (region='all'): All collectors, all currencies
                 collectorDropdown.innerHTML = `
-                    <option value="">Select Collector *</option>
+                    <option value="">Select Coordinator *</option>
                     <option value="Edward">Edward</option>
                     <option value="Suresh">Suresh</option>
                     <option value="Samuel">Samuel</option>
@@ -1498,9 +1498,9 @@
                         'A new loan has been created:\n\n' +
                         'Borrower: ' + loan.borrower_name + '\n' +
                         'Amount: ' + curr + loan.amount.toLocaleString('en-IN') + '\n' +
-                        'Monthly Payback: ' + payback + '\n' +
+                        'Monthly Contribution: ' + payback + '\n' +
                         'Purpose: ' + loan.purpose + '\n' +
-                        'Collector: ' + loan.collector + '\n' +
+                        'Coordinator: ' + loan.collector + '\n' +
                         'Loan Giver: ' + (loan.loan_giver || '-') + '\n' +
                         'Bank/UPI: ' + (req.bank || '-') + '\n' +
                         'First Payment Due: ' + (loan.first_payment_due || '-') + '\n' +
@@ -1887,7 +1887,7 @@
                 }
             });
             const giverFilter = document.getElementById('filterLoanGiver');
-            giverFilter.innerHTML = '<option value="">All Loan Givers</option>';
+            giverFilter.innerHTML = '<option value="">All Funding Partners</option>';
             const priorityOrder = ['hope', 'seeds', 'alive ministries'];
             const keys = Object.keys(giverMap);
             const priorityKeys = [];
@@ -2098,7 +2098,7 @@
                     }
                     
                     const commentsHtml = l.comments ? '<p class="text-sm text-gray-600 italic mt-1">Comments: ' + l.comments + '</p>' : '';
-                    const collectorInfo = l.collector ? '<p class="text-sm"><strong>Collector:</strong> ' + l.collector + '</p>' : '';
+                    const collectorInfo = l.collector ? '<p class="text-sm"><strong>Coordinator:</strong> ' + l.collector + '</p>' : '';
                     
                     // Calculate expected duration
                     const avgMonthlyPaid = monthsElapsed > 0 ? s.paid / monthsElapsed : 0;
@@ -2346,7 +2346,7 @@
                         <div class="flex justify-between items-start mb-3">
                             <div>
                                 <h3 class="text-lg font-bold text-gray-900">${loan.borrower_name}</h3>
-                                <p class="text-sm text-gray-600">${loan.purpose} - Collector: ${loan.collector || 'Not assigned'}</p>
+                                <p class="text-sm text-gray-600">${loan.purpose} - Coordinator: ${loan.collector || 'Not assigned'}</p>
                             </div>
                             <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">Needs Attention</span>
                         </div>
@@ -2522,7 +2522,7 @@
             }
 
             // Prompt for new values (pre-filled with current values)
-            const newBorrowerName = prompt('Borrower Name:', loan.borrower_name);
+            const newBorrowerName = prompt('Recipient Name:', loan.borrower_name);
             if (newBorrowerName === null) return; // Cancelled
 
             const newDate = prompt('Loan Date (YYYY-MM-DD):', loan.date);
@@ -2531,7 +2531,7 @@
             const newPurpose = prompt('Purpose:', loan.purpose);
             if (newPurpose === null) return;
 
-            const newLoanGiver = prompt('Loan Giver (optional):', loan.loan_giver || '');
+            const newLoanGiver = prompt('Funding Partner (optional):', loan.loan_giver || '');
             if (newLoanGiver === null) return;
 
             const newCollector = prompt('Collector (Edward, Suresh, Samuel, Irina, or Ivan):', loan.collector || '');
@@ -3471,7 +3471,7 @@
             ws['!rows'][1] = { hpt: 22 };
             row = 3;
             
-            const headers = ['Name', 'Collector', 'Purpose', 'Monthly (₹)', 'Amount Paid', 'Note / Reason'];
+            const headers = ['Name', 'Coordinator', 'Purpose', 'Monthly (₹)', 'Amount Paid', 'Note / Reason'];
             
             const sCollector = { font: { bold: true, sz: 12, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E40AF' } }, alignment: { horizontal: 'left', vertical: 'center' } };
             
