@@ -275,6 +275,10 @@
             <div id="createRequestView" data-view class="hidden">
                 <div class="bg-white rounded-lg shadow max-w-2xl mx-auto p-6">
                     <h2 class="text-xl font-bold mb-4">New Financial Request</h2>
+                    <div id="requestsClosedBanner" class="hidden mb-4 rounded-lg border border-orange-300 border-l-4 border-l-orange-600 bg-orange-50 p-4">
+                        <p class="font-bold text-orange-800 mb-1">⚠️ Requests closed until 1 January 2027</p>
+                        <p class="text-sm text-orange-900">Hope Association is not accepting new loan requests until the end of 2026. Admins can still create a request as an exception (you will be asked to confirm).</p>
+                    </div>
                     <div class="space-y-4">
                         <input type="text" id="requestFullName" placeholder="Full Name *" class="w-full px-4 py-2 border rounded-lg" required>
                         <input type="text" id="requestMinistryPlace" placeholder="Ministry Place / Team *" class="w-full px-4 py-2 border rounded-lg" required>
@@ -702,7 +706,7 @@
             document.getElementById('reminderPrevMonth').onclick = () => { reminderMonth.setMonth(reminderMonth.getMonth() - 1); renderReminders(); };
             document.getElementById('reminderNextMonth').onclick = () => { reminderMonth.setMonth(reminderMonth.getMonth() + 1); renderReminders(); };
             document.getElementById('reminderSearch').addEventListener('input', () => renderReminders());
-            document.getElementById('newRequestBtn').onclick = () => { editingRequestId = null; document.getElementById('submitRequestBtn').textContent = 'Submit Request'; switchView('createRequest'); };
+            document.getElementById('newRequestBtn').onclick = () => { editingRequestId = null; document.getElementById('submitRequestBtn').textContent = 'Submit Request'; document.getElementById('requestsClosedBanner').classList.toggle('hidden', !requestsClosed); switchView('createRequest'); };
             document.getElementById('submitRequestBtn').onclick = submitRequest;
             document.getElementById('cancelRequestBtn').onclick = () => { editingRequestId = null; document.getElementById('submitRequestBtn').textContent = 'Submit Request'; switchView('requests'); };
             document.getElementById('filterAllRequests').onclick = () => renderRequests('all');
@@ -867,7 +871,19 @@
         }
 
         // Requests Management with Proper Form
+        // ---- Requests closed until this date (reopens automatically) ----
+        const REQUESTS_OPEN_AGAIN = '2027-01-01';
+        const requestsClosed = new Date() < new Date(REQUESTS_OPEN_AGAIN);
+
         function submitRequest() {
+            if (requestsClosed && !editingRequestId) {
+                const proceed = confirm(
+                    'Hope Association is not accepting new loan requests until 1 January 2027.\n\n' +
+                    'Do you want to create this request anyway as an admin exception?'
+                );
+                if (!proceed) return;
+            }
+
             const fullName = document.getElementById('requestFullName').value.trim();
             const ministryPlace = document.getElementById('requestMinistryPlace').value.trim();
             const explanation = document.getElementById('requestExplanation').value.trim();
@@ -1340,6 +1356,7 @@
             document.getElementById('requestOtherResources').value = req.other_resources || '';
             document.getElementById('requestBankAccount').value = req.bank_account || '';
             document.getElementById('submitRequestBtn').textContent = 'Update Request';
+            document.getElementById('requestsClosedBanner').classList.add('hidden');
             switchView('createRequest');
         }
 
