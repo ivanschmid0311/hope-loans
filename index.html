@@ -875,6 +875,19 @@
         }
 
         // Requests Management with Proper Form
+        // ---- Display labels for stored purpose values ----
+        // Firestore keeps the original values; only the wording shown to users changes.
+        const PURPOSE_LABELS = {
+            'Business': 'Microenterprise / Livelihood',
+            'House Leasing': 'Housing Deposit Support',
+            'Real Estate': 'Land for Livelihood',
+            'Debt Clearance': 'Release from Exploitative Debt',
+            'Vehicle': 'Vehicle for Income Generation'
+        };
+        function purposeLabel(p) {
+            return PURPOSE_LABELS[p] || p || '';
+        }
+
         // ---- Requests closed until this date (reopens automatically) ----
         const REQUESTS_OPEN_AGAIN = '2027-01-01';
         const requestsClosed = new Date() < new Date(REQUESTS_OPEN_AGAIN);
@@ -1546,7 +1559,7 @@
                         'Borrower: ' + loan.borrower_name + '\n' +
                         'Amount: ' + curr + loan.amount.toLocaleString('en-IN') + '\n' +
                         'Monthly Contribution: ' + payback + '\n' +
-                        'Purpose: ' + loan.purpose + '\n' +
+                        'Purpose: ' + purposeLabel(loan.purpose) + '\n' +
                         'Coordinator: ' + loan.collector + '\n' +
                         'Loan Giver: ' + (loan.loan_giver || '-') + '\n' +
                         'Bank/UPI: ' + (req.bank || '-') + '\n' +
@@ -1589,7 +1602,7 @@
             const remaining = loan.amount - s;
             const sym = loan.currency === 'CHF' ? 'CHF ' : loan.currency === 'MXN' ? 'MXN $' : '₹';
             
-            const amountStr = prompt(`🕊️ Forgive Loan\n\n${loan.borrower_name} — ${loan.purpose}\nRemaining: ${sym}${remaining.toLocaleString('en-IN')}\n\nAmount to forgive (leave empty = full remaining):`, remaining);
+            const amountStr = prompt(`🕊️ Forgive Loan\n\n${loan.borrower_name} — ${purposeLabel(loan.purpose)}\nRemaining: ${sym}${remaining.toLocaleString('en-IN')}\n\nAmount to forgive (leave empty = full remaining):`, remaining);
             if (amountStr === null) return;
             const amount = parseFloat(amountStr) || remaining;
             
@@ -1637,7 +1650,7 @@
             }
             
             document.getElementById('paymentModalTitle').textContent = 'Record Payment';
-            document.getElementById('paymentModalSubtitle').textContent = loan.borrower_name + ' — ' + loan.purpose + ' (Monthly: ' + mpSym + (loan.monthly_payment || 0).toLocaleString('en-IN') + ')';
+            document.getElementById('paymentModalSubtitle').textContent = loan.borrower_name + ' — ' + purposeLabel(loan.purpose) + ' (Monthly: ' + mpSym + (loan.monthly_payment || 0).toLocaleString('en-IN') + ')';
             document.getElementById('modalPayAmount').value = loan.monthly_payment || '';
             document.getElementById('modalPayCurrency').value = mpCur;
             document.getElementById('modalPayDate').value = defaultDate;
@@ -2174,7 +2187,7 @@
                         ? 'background:#f3f4f6;opacity:0.65;border-left:4px solid #9ca3af;padding:12px;border-radius:6px'
                         : 'background:#f8faff;border-left:4px solid #6366f1;padding:12px;border-radius:6px';
                     loansHtml += '<div style="' + cardStyle + '">';
-                    loansHtml += '<strong>' + l.purpose + '</strong>';
+                    loansHtml += '<strong>' + purposeLabel(l.purpose) + '</strong>';
                     const giverDisplay = l.loan_giver || 'N/A';
                     const giverClickable = l.loan_giver ? '<span style="cursor:pointer;color:#2563eb;text-decoration:underline" onclick="document.getElementById(\'searchInput\').value=\''+l.loan_giver+'\';renderLoans();" title="Search for this loan giver">' + giverDisplay + '</span>' : giverDisplay;
                     loansHtml += '<p class="text-sm"><strong>Loan Giver:</strong> ' + giverClickable + '</p>';
@@ -2393,7 +2406,7 @@
                         <div class="flex justify-between items-start mb-3">
                             <div>
                                 <h3 class="text-lg font-bold text-gray-900">${loan.borrower_name}</h3>
-                                <p class="text-sm text-gray-600">${loan.purpose} - Coordinator: ${loan.collector || 'Not assigned'}</p>
+                                <p class="text-sm text-gray-600">${purposeLabel(loan.purpose)} - Coordinator: ${loan.collector || 'Not assigned'}</p>
                             </div>
                             <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">Needs Attention</span>
                         </div>
@@ -2440,7 +2453,7 @@
             const defaultDate = checkYear + '-' + String(checkMonth + 1).padStart(2, '0') + '-15';
             
             document.getElementById('noPayModalTitle').textContent = 'No Payment';
-            document.getElementById('noPayModalSubtitle').textContent = loan.borrower_name + ' — ' + loan.purpose;
+            document.getElementById('noPayModalSubtitle').textContent = loan.borrower_name + ' — ' + purposeLabel(loan.purpose);
             document.getElementById('modalNoPayDate').value = defaultDate;
             document.getElementById('modalNoPayReason').value = '';
             document.getElementById('modalNoPayCharCount').textContent = '0 / 20 characters minimum';
@@ -2669,7 +2682,7 @@
             // Confirm deletion
             const confirmMsg = `Are you sure you want to DELETE this loan?\n\n` +
                 `Borrower: ${loan.borrower_name}\n` +
-                `Purpose: ${loan.purpose}\n` +
+                `Purpose: ${purposeLabel(loan.purpose)}\n` +
                 `Amount: ${loan.currency} ${loan.amount.toLocaleString()}\n` +
                 `\nThis will also delete ${loanPayments.length} payment record(s).\n\n` +
                 `THIS CANNOT BE UNDONE!`;
@@ -2774,9 +2787,9 @@
 
                 if (idx > 0) html += '<div class="page-break"></div>';
 
-                html += '<h2>Loan ' + (idx + 1) + ': ' + loan.purpose + '</h2>';
+                html += '<h2>Advance ' + (idx + 1) + ': ' + purposeLabel(loan.purpose) + '</h2>';
                 html += '<table>';
-                html += '<tr><td class="label-cell">Purpose</td><td class="value-cell">' + loan.purpose + '</td></tr>';
+                html += '<tr><td class="label-cell">Purpose</td><td class="value-cell">' + purposeLabel(loan.purpose) + '</td></tr>';
                 html += '<tr><td class="label-cell">Loan Giver</td><td class="value-cell">' + (loan.loan_giver || 'N/A') + '</td></tr>';
                 html += '<tr><td class="label-cell">Loan Date</td><td class="value-cell">' + new Date(loan.date).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'}) + '</td></tr>';
                 html += '<tr><td class="label-cell">Currency</td><td class="value-cell">' + (loan.currency === 'CHF' ? 'CHF (Swiss Franc)' : 'INR (Indian Rupee)') + '</td></tr>';
@@ -2886,7 +2899,7 @@
                 totalPaid += stats.paid;
                 
                 // Section header
-                XLSX.utils.sheet_add_aoa(ws, [['  Loan ' + (idx + 1) + ': ' + (loan.purpose || '')]], { origin: XLSX.utils.encode_cell({ r: row, c: 0 }) });
+                XLSX.utils.sheet_add_aoa(ws, [['  Advance ' + (idx + 1) + ': ' + purposeLabel(loan.purpose)]], { origin: XLSX.utils.encode_cell({ r: row, c: 0 }) });
                 for (let c = 0; c < 4; c++) { const cell = XLSX.utils.encode_cell({ r: row, c }); if (!ws[cell]) ws[cell] = { v: '', t: 's' }; ws[cell].s = sSection; }
                 ws['!merges'].push({ s: { r: row, c: 0 }, e: { r: row, c: 3 } });
                 ws['!rows'][row] = { hpt: 26 };
@@ -3033,7 +3046,7 @@
                 const amount = parseFloat(loan.amount) || 0;
                 const amountInINR = loan.currency === 'INR' ? amount : amount * rate;
                 return [
-                    loan.borrower_name, loan.date, loan.purpose || '', loan.loan_giver || '',
+                    loan.borrower_name, loan.date, purposeLabel(loan.purpose), loan.loan_giver || '',
                     loan.currency || 'INR', amount, Math.round(amountInINR),
                     parseInt(loan.months) || 0, parseFloat(loan.monthly_payment) || 0, stats.paid
                 ];
@@ -3374,7 +3387,7 @@
                 const r = 4 + i;
                 const mp = parseFloat(loan.monthly_payment) || 0;
                 totalMonthly += mp;
-                const row = [i + 1, loan.borrower_name, loan.purpose || '', mp, ''];
+                const row = [i + 1, loan.borrower_name, purposeLabel(loan.purpose), mp, ''];
                 XLSX.utils.sheet_add_aoa(ws, [row], { origin: XLSX.utils.encode_cell({ r, c: 0 }) });
                 const alt = i % 2 === 1;
                 for (let c = 0; c < row.length; c++) {
@@ -3585,21 +3598,21 @@
                 // Unpaid first (most important)
                 if (data.missing.length > 0) {
                     writeSection('⚠️ NOT RECORDED', sOrangeHeader, data.missing, (item) => {
-                        return [item.loan.borrower_name, colName, item.loan.purpose || '', parseFloat(item.loan.monthly_payment) || 0, '', ''];
+                        return [item.loan.borrower_name, colName, purposeLabel(item.loan.purpose), parseFloat(item.loan.monthly_payment) || 0, '', ''];
                     });
                 }
                 
                 // No payment with reason
                 if (data.noPay.length > 0) {
                     writeSection('❌ NO PAYMENT', sRedHeader, data.noPay, (item) => {
-                        return [item.loan.borrower_name, colName, item.loan.purpose || '', parseFloat(item.loan.monthly_payment) || 0, 0, item.payment.note || ''];
+                        return [item.loan.borrower_name, colName, purposeLabel(item.loan.purpose), parseFloat(item.loan.monthly_payment) || 0, 0, item.payment.note || ''];
                     });
                 }
                 
                 // Paid
                 if (data.paid.length > 0) {
                     writeSection('✅ PAID', sGreenHeader, data.paid, (item) => {
-                        return [item.loan.borrower_name, colName, item.loan.purpose || '', parseFloat(item.loan.monthly_payment) || 0, item.payment.amount, item.payment.comment || ''];
+                        return [item.loan.borrower_name, colName, purposeLabel(item.loan.purpose), parseFloat(item.loan.monthly_payment) || 0, item.payment.amount, item.payment.comment || ''];
                     });
                 }
             });
