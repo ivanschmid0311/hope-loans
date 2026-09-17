@@ -1337,8 +1337,51 @@
                 + '&subject=' + encodeURIComponent(subject)
                 + '&body=' + encodeURIComponent(body);
 
-            const win = window.open(mailto, '_blank');
-            if (!win || win.closed) window.location.href = mailto;
+            showRejectionEmailModal(subject, body, mailto);
+        }
+
+        function showRejectionEmailModal(subject, body, mailto) {
+            const old = document.getElementById('rejectEmailModal');
+            if (old) old.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'rejectEmailModal';
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            overlay.innerHTML =
+                '<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">' +
+                  '<div class="p-6">' +
+                    '<h3 class="text-xl font-bold mb-1">Notification email ready</h3>' +
+                    '<p class="text-sm text-gray-600 mb-4">To: Samuel, Isaac, Edward &nbsp;·&nbsp; CC: Ivan</p>' +
+                    '<p class="text-sm font-semibold text-gray-700 mb-1">Subject</p>' +
+                    '<p class="text-sm bg-gray-50 border rounded p-2 mb-3" id="rejEmailSubject"></p>' +
+                    '<p class="text-sm font-semibold text-gray-700 mb-1">Message</p>' +
+                    '<textarea id="rejEmailBody" rows="14" class="w-full text-sm font-mono border rounded p-2 mb-4"></textarea>' +
+                    '<div class="flex gap-2 flex-wrap">' +
+                      '<a id="rejEmailOpen" class="flex-1 text-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-semibold cursor-pointer">📧 Open in Email</a>' +
+                      '<button id="rejEmailCopy" class="flex-1 bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 font-semibold">📋 Copy text</button>' +
+                      '<button id="rejEmailClose" class="px-4 py-2 rounded-lg hover:bg-gray-100">Close</button>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>';
+            document.body.appendChild(overlay);
+
+            document.getElementById('rejEmailSubject').textContent = subject;
+            document.getElementById('rejEmailBody').value = body;
+            document.getElementById('rejEmailOpen').href = mailto;
+            document.getElementById('rejEmailClose').onclick = () => overlay.remove();
+            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+            document.getElementById('rejEmailCopy').onclick = async () => {
+                const btn = document.getElementById('rejEmailCopy');
+                const text = 'Subject: ' + subject + '\n\n' + document.getElementById('rejEmailBody').value;
+                try {
+                    await navigator.clipboard.writeText(text);
+                } catch (e) {
+                    const ta = document.getElementById('rejEmailBody');
+                    ta.select(); document.execCommand('copy');
+                }
+                btn.textContent = '✅ Copied';
+                setTimeout(() => { btn.textContent = '📋 Copy text'; }, 2000);
+            };
         }
 
         let editingRequestId = null;
