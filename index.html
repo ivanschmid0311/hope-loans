@@ -1270,11 +1270,59 @@
                     rejected_date: new Date().toISOString(),
                     rejected_by: currentUser.username
                 });
+                sendRejectionEmail(requestId, reason);
                 renderRequests('all');
             } catch (error) {
                 console.error('Error rejecting request:', error);
                 alert('Error rejecting request. Please try again.');
             }
+        }
+
+        // ---- Rejection notification email ----
+        const REJECT_EMAIL_TO = [
+            'samuelchennai@yahoo.com',   // Samuel
+            'irpjj23@proton.me',         // Isaac
+            'samuel2radha@yahoo.co.in'   // Edward
+        ].join(',');
+        const REJECT_EMAIL_CC = 'ivan.schmid@me.com';
+
+        function sendRejectionEmail(requestId, reason) {
+            const req = requests.find(function(r) { return r.id === requestId; });
+            if (!req) return;
+
+            const curr = req.currency === 'CHF' ? 'CHF ' : req.currency === 'MXN' ? 'MX$' : '₹';
+            const amount = (typeof req.amount === 'number') ? req.amount.toLocaleString('en-IN') : '-';
+            const monthly = (typeof req.monthly_payback === 'number' && req.monthly_payback > 0)
+                ? curr + req.monthly_payback.toLocaleString('en-IN') + '/month' : '-';
+            const submitted = req.submitted_date
+                ? new Date(req.submitted_date).toLocaleDateString('en-GB') : '-';
+
+            const subject = 'Loan Request Declined: ' + (req.full_name || req.name || 'Unknown')
+                + ' - ' + curr + amount;
+
+            const body =
+                'Dear Samuel, Isaac and Edward,\n\n' +
+                'The following loan request has been DECLINED:\n\n' +
+                'Name: ' + (req.full_name || req.name || '-') + '\n' +
+                'Ministry Place / Team: ' + (req.ministry_place || '-') + '\n' +
+                'Phone: ' + (req.phone || '-') + '\n' +
+                'Amount Requested: ' + curr + amount + '\n' +
+                'Monthly Payback: ' + monthly + '\n' +
+                'Purpose: ' + (req.explanation || '-') + '\n' +
+                'Submitted: ' + submitted + '\n\n' +
+                'Reason for decline: ' + (reason || 'No reason provided') + '\n' +
+                'Declined by: ' + currentUser.username + '\n' +
+                'Date: ' + new Date().toLocaleDateString('en-GB') + '\n\n' +
+                'Please inform the applicant accordingly.\n\n' +
+                'Best regards';
+
+            const mailto = 'mailto:' + REJECT_EMAIL_TO
+                + '?cc=' + REJECT_EMAIL_CC
+                + '&subject=' + encodeURIComponent(subject)
+                + '&body=' + encodeURIComponent(body);
+
+            const win = window.open(mailto, '_blank');
+            if (!win || win.closed) window.location.href = mailto;
         }
 
         let editingRequestId = null;

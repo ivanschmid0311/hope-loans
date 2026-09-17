@@ -256,6 +256,14 @@
 
 <div class="container">
 
+  <div id="closedNotice" style="display:none;background:#fff7ed;border:1px solid #fdba74;border-left:5px solid #ea580c;border-radius:14px;padding:22px 24px;margin-bottom:24px;">
+    <h3 style="font-family:'Lora',serif;font-size:1.15rem;color:#9a3412;margin-bottom:8px;">⚠️ Currently not accepting new loan requests</h3>
+    <p style="font-size:0.95rem;line-height:1.6;color:#7c2d12;">
+      Due to limited funds, Hope Association is <strong>not accepting new loan applications until 31 December 2026</strong>.
+      Please submit your request from January 2027 onwards. Thank you for your understanding.
+    </p>
+  </div>
+
   <div id="formWrapper">
 
     <!-- 1. Personal Info -->
@@ -416,6 +424,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// ---- Requests closed until this date (auto-reopens by itself) ----
+const REQUESTS_OPEN_AGAIN = '2027-01-01';
+
+const requestsClosed = new Date() < new Date(REQUESTS_OPEN_AGAIN);
+if (requestsClosed) {
+  document.getElementById('closedNotice').style.display = 'block';
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.style.opacity = '0.45';
+  btn.style.cursor = 'not-allowed';
+  btn.innerHTML = 'Requests closed until January 2027';
+  document.querySelectorAll('#formWrapper input, #formWrapper select, #formWrapper textarea')
+    .forEach(function(el) { el.disabled = true; });
+}
+
 function validate(id, fieldId) {
   const val = document.getElementById(id).value.trim();
   const field = document.getElementById(fieldId);
@@ -428,6 +451,11 @@ function validate(id, fieldId) {
 }
 
 window.submitRequest = async function() {
+  if (requestsClosed) {
+    alert('Hope Association is not accepting new loan requests until January 2027. Thank you for your understanding.');
+    return;
+  }
+
   // Validate required fields
   let ok = true;
   ok = validate('fullName', 'f-fullName') && ok;
