@@ -177,7 +177,7 @@
                         <button id="navRequests" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">Requests</button>
                         <button id="navReminders" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">Follow-up</button>
                         <button id="navBalance" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">Balance</button>
-                        <button id="navSupport" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">Support</button>
+                        <button id="navSupport" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">Work Contributions</button>
                         <button id="navGrants" onclick="window.location.href='grants.html'" class="px-4 py-2 text-orange-600 font-semibold hover:text-orange-800">📋 Grants</button>
                         <button id="navCreate" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">New Advance</button>
                         <button id="navSettings" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">Settings</button>
@@ -206,7 +206,7 @@
                         </select>
                         <select id="filterCollector" class="px-3 py-1.5 border rounded-lg text-sm">
                             <option value="">All Coordinators</option>
-                            <option value="Suresh">Suresh</option>
+                            <option value="Rajan S.">Rajan S.</option>
                             <option value="Edward">Edward</option>
                             <option value="Samuel">Samuel</option>
                             <option value="Irina">Irina</option>
@@ -228,9 +228,6 @@
                             <option value="Vehicle">Vehicle for Income Generation</option>
                             <option value="Medical Treatment">Medical Treatment</option>
                             <option value="Other Reason">Other Reason</option>
-                        </select>
-                        <select id="filterLoanGiver" class="px-4 py-2 border rounded-lg">
-                            <option value="">All Funding Partners</option>
                         </select>
                         <select id="filterCurrency" class="px-3 py-1.5 border rounded-lg text-sm">
                             <option value="">All Currencies</option>
@@ -352,7 +349,7 @@
                         <select id="loanCollector" class="w-full px-4 py-2 border rounded-lg" required>
                             <option value="">Select Coordinator *</option>
                             <option value="Edward">Edward</option>
-                            <option value="Suresh">Suresh</option>
+                            <option value="Rajan S.">Rajan S.</option>
                             <option value="Samuel">Samuel</option>
                             <option value="Irina">Irina</option>
                             <option value="Ivan">Ivan</option>
@@ -472,6 +469,12 @@
                     <input type="date" id="modalNoPayDate" class="w-full px-4 py-3 border rounded-lg text-lg">
                 </div>
                 <div>
+                    <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input type="checkbox" id="modalNoPayNoReason" class="mt-1 w-5 h-5">
+                        <span class="text-sm text-gray-700">No particular reason given<span class="block text-xs text-gray-400 mt-0.5">Tick this if no explanation was provided.</span></span>
+                    </label>
+                </div>
+                <div id="modalNoPayReasonWrap">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Reason * <span class="font-normal text-gray-400">(min 20 characters)</span></label>
                     <textarea id="modalNoPayReason" rows="3" placeholder="Why was there no payment this month?" class="w-full px-4 py-3 border rounded-lg"></textarea>
                     <p id="modalNoPayCharCount" class="text-xs text-gray-400 mt-1">0 / 20 characters minimum</p>
@@ -513,7 +516,7 @@
             'isaac@hope.org': {role: 'collector', name: 'Isaac', region: 'india'},
             'ida@hope.org': {role: 'collector', name: 'Ida', region: 'india'},
             'oli@hope.org': {role: 'admin', name: 'Oli', region: 'india'},
-            'suresh@hope.org': {role: 'collector', name: 'Suresh', region: 'india'},
+            'suresh@hope.org': {role: 'collector', name: 'Rajan S.', region: 'india'},
             'edward@hope.org': {role: 'collector', name: 'Edward', region: 'india'},
             'irina@hope.org': {role: 'collector', name: 'Irina', region: 'mexico'},
             'katharina@hope.org': {role: 'collector', name: 'Katharina', region: 'india'},
@@ -812,7 +815,7 @@
                     document.getElementById('navCreate').style.display = '';
                 }
                 // Field collectors can see support (read-only)
-                const fc = ['Suresh', 'Edward', 'Samuel', 'Irina', 'Francine'];
+                const fc = ['Rajan S.', 'Edward', 'Samuel', 'Irina', 'Francine'];
                 if (fc.includes(currentUser.name)) {
                     document.getElementById('navSupport').style.display = '';
                 } else {
@@ -1476,7 +1479,7 @@
                 collectorDropdown.innerHTML = `
                     <option value="">Select Coordinator *</option>
                     <option value="Edward">Edward</option>
-                    <option value="Suresh">Suresh</option>
+                    <option value="Rajan S.">Rajan S.</option>
                     <option value="Samuel">Samuel</option>
                 `;
                 collectorDropdown.disabled = false;
@@ -1494,7 +1497,7 @@
                 collectorDropdown.innerHTML = `
                     <option value="">Select Coordinator *</option>
                     <option value="Edward">Edward</option>
-                    <option value="Suresh">Suresh</option>
+                    <option value="Rajan S.">Rajan S.</option>
                     <option value="Samuel">Samuel</option>
                     <option value="Irina">Irina</option>
                     <option value="Ivan">Ivan</option>
@@ -1982,7 +1985,7 @@
             const filterLoanGiver = document.getElementById('filterLoanGiver').value;
             const filterStatus = document.getElementById('filterStatus').value;
 
-            const fieldCollectors = ['Suresh', 'Edward', 'Samuel', 'Irina'];
+            const fieldCollectors = ['Rajan S.', 'Edward', 'Samuel', 'Irina'];
             const isFieldCollector = fieldCollectors.includes(currentUser.name);
             
             let filtered = loans.filter(l => {
@@ -1992,11 +1995,11 @@
                     if (l.collector !== currentUser.name) return false;
                 } else if (currentUser.role === 'collector' && currentUser.region === 'india') {
                     // Observer collectors see all India loans
-                    if (l.collector !== 'Edward' && l.collector !== 'Suresh' && l.collector !== 'Samuel') return false;
+                    if (l.collector !== 'Edward' && l.collector !== 'Rajan S.' && l.collector !== 'Samuel') return false;
                 } else if (currentUser.role === 'collector' && currentUser.region === 'mexico') {
                     if (l.collector !== 'Irina') return false;
                 } else if (currentUser.region === 'india') {
-                    if (l.collector !== 'Edward' && l.collector !== 'Suresh' && l.collector !== 'Samuel') return false;
+                    if (l.collector !== 'Edward' && l.collector !== 'Rajan S.' && l.collector !== 'Samuel') return false;
                 } else if (currentUser.region === 'mexico') {
                     if (l.collector !== 'Irina') return false;
                 }
@@ -2068,7 +2071,7 @@
                     let paymentHistory = '';
                     
                     if (loanPayments.length > 0) {
-                        const initialsMap = {'Ivan':'IV','Oli':'OLI','Oliver':'OLI','Suresh':'SU','Edward':'ED','Samuel':'SAM','Irina':'IRI','Isaac':'ISA','Ida':'IDA','Katharina':'KAT','Francine':'FRA','Michael':'MIC'};
+                        const initialsMap = {'Ivan':'IV','Oli':'OLI','Oliver':'OLI','Rajan S.':'SU','Edward':'ED','Samuel':'SAM','Irina':'IRI','Isaac':'ISA','Ida':'IDA','Katharina':'KAT','Francine':'FRA','Michael':'MIC'};
                         paymentHistory = '<div class="mt-2 text-xs bg-gray-100 p-2 rounded"><strong>Payment History:</strong><br>';
                         loanPayments.forEach(p => {
                             console.log('💵 Displaying payment:', p);
@@ -2264,17 +2267,17 @@
                 // Collectors only see their own - no filter buttons needed, just export
                 html += `<button onclick="exportCollectorList('${currentUser.name}')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold">📋 My List</button>`;
             } else if (currentUser.region === 'mexico') {
-                html += '<button id="filterAllLoans" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm">All Loans</button>';
+                html += '<button id="filterAllLoans" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm">All Advances</button>';
                 html += `<button onclick="exportCollectorList('Irina')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold">📋 Irina</button>`;
             } else {
                 // Admin with region 'all' or india - show all collector buttons
-                html += '<button id="filterAllLoans" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm">All Loans</button>';
-                html += '<button id="filterSureshLoans" class="px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Suresh</button>';
+                html += '<button id="filterAllLoans" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm">All Advances</button>';
+                html += '<button id="filterSureshLoans" class="px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Rajan S.</button>';
                 html += '<button id="filterEdwardLoans" class="px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Edward</button>';
                 html += '<button id="filterSamuelLoans" class="px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Samuel</button>';
                 html += '<button id="filterIrinaLoans" class="px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Irina</button>';
                 html += '<span class="border-l border-gray-300 mx-1"></span>';
-                html += `<button onclick="exportCollectorList('Suresh')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold">📋 Suresh</button>`;
+                html += `<button onclick="exportCollectorList('Rajan S.')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold">📋 Rajan S.</button>`;
                 html += `<button onclick="exportCollectorList('Edward')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold">📋 Edward</button>`;
                 html += `<button onclick="exportCollectorList('Samuel')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold">📋 Samuel</button>`;
                 html += `<button onclick="exportCollectorList('Irina')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold">📋 Irina</button>`;
@@ -2288,7 +2291,7 @@
             const samuelBtn = document.getElementById('filterSamuelLoans');
             const irinaBtn = document.getElementById('filterIrinaLoans');
             if (allBtn) allBtn.onclick = () => renderReminders('all');
-            if (sureshBtn) sureshBtn.onclick = () => renderReminders('Suresh');
+            if (sureshBtn) sureshBtn.onclick = () => renderReminders('Rajan S.');
             if (edwardBtn) edwardBtn.onclick = () => renderReminders('Edward');
             if (samuelBtn) samuelBtn.onclick = () => renderReminders('Samuel');
             if (irinaBtn) irinaBtn.onclick = () => renderReminders('Irina');
@@ -2310,7 +2313,7 @@
             const samuelBtn = document.getElementById('filterSamuelLoans');
             const irinaBtn = document.getElementById('filterIrinaLoans');
             if (allBtn) allBtn.className = reminderCollectorFilter === 'all' ? activeStyle : inactiveStyle;
-            if (sureshBtn) sureshBtn.className = reminderCollectorFilter === 'Suresh' ? activeStyle : inactiveStyle;
+            if (sureshBtn) sureshBtn.className = reminderCollectorFilter === 'Rajan S.' ? activeStyle : inactiveStyle;
             if (edwardBtn) edwardBtn.className = reminderCollectorFilter === 'Edward' ? activeStyle : inactiveStyle;
             if (samuelBtn) samuelBtn.className = reminderCollectorFilter === 'Samuel' ? activeStyle : inactiveStyle;
             if (irinaBtn) irinaBtn.className = reminderCollectorFilter === 'Irina' ? activeStyle : inactiveStyle;
@@ -2326,16 +2329,16 @@
             });
 
             // Filter by region/role
-            const fieldCollectors2 = ['Suresh', 'Edward', 'Samuel', 'Irina'];
+            const fieldCollectors2 = ['Rajan S.', 'Edward', 'Samuel', 'Irina'];
             const isField2 = fieldCollectors2.includes(currentUser.name);
             if (currentUser.role === 'collector' && isField2) {
                 activeLoans = activeLoans.filter(l => l.collector === currentUser.name);
             } else if (currentUser.role === 'collector' && currentUser.region === 'india') {
-                activeLoans = activeLoans.filter(l => l.collector === 'Edward' || l.collector === 'Suresh' || l.collector === 'Samuel');
+                activeLoans = activeLoans.filter(l => l.collector === 'Edward' || l.collector === 'Rajan S.' || l.collector === 'Samuel');
             } else if (currentUser.role === 'collector' && currentUser.region === 'mexico') {
                 activeLoans = activeLoans.filter(l => l.collector === 'Irina');
             } else if (currentUser.region === 'india') {
-                activeLoans = activeLoans.filter(l => l.collector === 'Edward' || l.collector === 'Suresh' || l.collector === 'Samuel');
+                activeLoans = activeLoans.filter(l => l.collector === 'Edward' || l.collector === 'Rajan S.' || l.collector === 'Samuel');
             } else if (currentUser.region === 'mexico') {
                 activeLoans = activeLoans.filter(l => l.collector === 'Irina');
             }
@@ -2457,7 +2460,18 @@
             document.getElementById('modalNoPayDate').value = defaultDate;
             document.getElementById('modalNoPayReason').value = '';
             document.getElementById('modalNoPayCharCount').textContent = '0 / 20 characters minimum';
-            
+            document.getElementById('modalNoPayCharCount').className = 'text-xs text-gray-400 mt-1';
+
+            const noReasonBox = document.getElementById('modalNoPayNoReason');
+            const reasonWrap = document.getElementById('modalNoPayReasonWrap');
+            noReasonBox.checked = false;
+            reasonWrap.style.display = '';
+
+            noReasonBox.onchange = () => {
+                reasonWrap.style.display = noReasonBox.checked ? 'none' : '';
+                if (!noReasonBox.checked) document.getElementById('modalNoPayReason').focus();
+            };
+
             modal.classList.remove('hidden');
             document.getElementById('modalNoPayReason').focus();
             
@@ -2476,11 +2490,14 @@
                 };
                 document.getElementById('modalNoPaySubmit').onclick = async () => {
                     const paymentDate = document.getElementById('modalNoPayDate').value;
-                    const reason = document.getElementById('modalNoPayReason').value.trim();
-                    
+                    const noReason = document.getElementById('modalNoPayNoReason').checked;
+                    const reason = noReason
+                        ? 'No particular reason given'
+                        : document.getElementById('modalNoPayReason').value.trim();
+
                     if (!paymentDate) { alert('Please select a date'); return; }
-                    if (reason.length < 20) { 
-                        alert('Reason must be at least 20 characters! Currently: ' + reason.length);
+                    if (!noReason && reason.length < 20) {
+                        alert('Please give a reason of at least 20 characters, or tick "No particular reason given". Currently: ' + reason.length);
                         return; 
                     }
                     
@@ -2594,7 +2611,7 @@
             const newLoanGiver = prompt('Funding Partner (optional):', loan.loan_giver || '');
             if (newLoanGiver === null) return;
 
-            const newCollector = prompt('Collector (Edward, Suresh, Samuel, Irina, or Ivan):', loan.collector || '');
+            const newCollector = prompt('Coordinator (Edward, Rajan S., Samuel, Irina, or Ivan):', loan.collector || '');
             if (newCollector === null) return;
 
             const newCurrency = prompt('Currency (INR, CHF, or MXN):', loan.currency || 'INR');
@@ -3453,16 +3470,16 @@
             });
             
             // Filter by region/role
-            const fieldCollectors3 = ['Suresh', 'Edward', 'Samuel', 'Irina'];
+            const fieldCollectors3 = ['Rajan S.', 'Edward', 'Samuel', 'Irina'];
             const isField3 = fieldCollectors3.includes(currentUser.name);
             if (currentUser.role === 'collector' && isField3) {
                 reportLoans = reportLoans.filter(l => l.collector === currentUser.name);
             } else if (currentUser.role === 'collector' && currentUser.region === 'india') {
-                reportLoans = reportLoans.filter(l => l.collector === 'Edward' || l.collector === 'Suresh' || l.collector === 'Samuel');
+                reportLoans = reportLoans.filter(l => l.collector === 'Edward' || l.collector === 'Rajan S.' || l.collector === 'Samuel');
             } else if (currentUser.role === 'collector' && currentUser.region === 'mexico') {
                 reportLoans = reportLoans.filter(l => l.collector === 'Irina');
             } else if (currentUser.region === 'india') {
-                reportLoans = reportLoans.filter(l => l.collector === 'Edward' || l.collector === 'Suresh' || l.collector === 'Samuel');
+                reportLoans = reportLoans.filter(l => l.collector === 'Edward' || l.collector === 'Rajan S.' || l.collector === 'Samuel');
             } else if (currentUser.region === 'mexico') {
                 reportLoans = reportLoans.filter(l => l.collector === 'Irina');
             }
@@ -3578,7 +3595,7 @@
             }
             
             // Write sections grouped by collector
-            const collectorOrder = ['Suresh', 'Edward', 'Samuel', 'Irina', 'Ivan'];
+            const collectorOrder = ['Rajan S.', 'Edward', 'Samuel', 'Irina', 'Ivan'];
             const allCollectors = [...new Set([...collectorOrder, ...Object.keys(collectors)])];
             
             allCollectors.forEach(colName => {
