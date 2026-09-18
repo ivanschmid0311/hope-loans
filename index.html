@@ -178,7 +178,6 @@
                         <button id="navReminders" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">Follow-up</button>
                         <button id="navBalance" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">Balance</button>
                         <button id="navSupport" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">Work Contributions</button>
-                        <button id="navGrants" onclick="window.location.href='grants.html'" class="px-4 py-2 text-orange-600 font-semibold hover:text-orange-800">📋 Grants</button>
                         <button id="navCreate" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">New Advance</button>
                         <button id="navSettings" data-nav class="px-4 py-2 whitespace-nowrap hover:text-indigo-600">Settings</button>
                     </div>
@@ -384,7 +383,7 @@
                     <h2 class="text-xl font-bold mb-4">Data Backup & Restore</h2>
                     <p class="text-sm text-gray-600 mb-4">Protect your data by creating regular backups</p>
                     <div class="flex gap-4">
-                        <button onclick="backupAllData()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
+                        <button id="backupBtn" onclick="backupAllData()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
                             💾 Download Backup
                         </button>
                         <button onclick="restoreFromBackup()" class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-semibold">
@@ -810,7 +809,6 @@
                 // Collectors can't create loans, except Irina (mexico)
                 if (currentUser.region !== 'mexico') {
                     document.getElementById('navCreate').style.display = 'none';
-                    const ng = document.getElementById('navGrants'); if (ng) ng.style.display = 'none';
                 } else {
                     document.getElementById('navCreate').style.display = '';
                 }
@@ -3200,26 +3198,72 @@
             window.URL.revokeObjectURL(url);
         }
 
-        // Backup All Data
-        function backupAllData() {
-            const backup = {
-                backup_date: new Date().toISOString(),
-                backup_version: '1.0',
-                loans: loans,
-                payments: payments,
-                chfRates: chfRates
-            };
+        // All Firestore collections used by the app. Add new ones here so they
+        // are included in every backup.
+        const BACKUP_COLLECTIONS = [
+            'loans',
+            'payments',
+            'requests',
+            'support_recipients',
+            'balance_transactions',
+            'opening_balances',
+            'chf_rates',
+            'chfRates'
+        ];
 
-            const dataStr = JSON.stringify(backup, null, 2);
-            const blob = new Blob([dataStr], {type: 'application/json'});
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'Hope_Association_Backup_' + new Date().toISOString().split('T')[0] + '.json';
-            a.click();
-            window.URL.revokeObjectURL(url);
+        // Backup All Data — reads every collection straight from Firestore
+        async function backupAllData() {
+            const btn = document.getElementById('backupBtn');
+            const label = btn ? btn.textContent : null;
+            if (btn) { btn.textContent = '⏳ Creating backup...'; btn.disabled = true; }
 
-            alert('✅ Backup downloaded!\n\nSave this file in a SAFE place:\n- Google Drive\n- Dropbox\n- External hard drive\n\nYou can restore from this backup anytime!');
+            try {
+                const data = {};
+                const counts = [];
+                const failed = [];
+
+                for (const name of BACKUP_COLLECTIONS) {
+                    try {
+                        const snap = await getDocs(collection(db, name));
+                        data[name] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        counts.push(name + ': ' + data[name].length);
+                    } catch (err) {
+                        console.error('Backup failed for collection', name, err);
+                        failed.push(name);
+                    }
+                }
+
+                const backup = {
+                    backup_date: new Date().toISOString(),
+                    backup_version: '2.0',
+                    collections: data,
+                    // kept for compatibility with the old restore format
+                    loans: data.loans || [],
+                    payments: data.payments || [],
+                    chfRates: chfRates
+                };
+
+                const dataStr = JSON.stringify(backup, null, 2);
+                const blob = new Blob([dataStr], {type: 'application/json'});
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Hope_Association_Backup_' + new Date().toISOString().split('T')[0] + '.json';
+                a.click();
+                window.URL.revokeObjectURL(url);
+
+                let msg = '✅ Backup downloaded!\n\n' + counts.join('\n');
+                if (failed.length) {
+                    msg += '\n\n⚠️ Could NOT be read (check permissions):\n' + failed.join('\n');
+                }
+                msg += '\n\nSave this file in a SAFE place:\n- Google Drive\n- Dropbox\n- External hard drive';
+                alert(msg);
+            } catch (error) {
+                console.error('Backup error:', error);
+                alert('❌ Backup failed: ' + error.message);
+            } finally {
+                if (btn && label) { btn.textContent = label; btn.disabled = false; }
+            }
         }
 
         // Restore from Backup (for admins only)
@@ -3245,49 +3289,67 @@
                     try {
                         const backup = JSON.parse(event.target.result);
 
-                        if (!backup.loans || !backup.payments || !backup.chfRates) {
-                            alert('❌ Invalid backup file!');
-                            return;
-                        }
+                        // New format (v2.0) carries every collection under .collections
+                        if (backup.collections) {
+                            const names = Object.keys(backup.collections)
+                                .filter(n => Array.isArray(backup.collections[n]));
+                            const summary = names
+                                .map(n => '  ' + n + ': ' + backup.collections[n].length)
+                                .join('\n');
 
-                        if (!confirm(`Restore backup from ${new Date(backup.backup_date).toLocaleDateString()}?\n\nThis will:\n- Delete all current loans\n- Delete all current payments\n- Delete all current rates\n- Restore from backup\n\nCONTINUE?`)) {
-                            return;
-                        }
+                            if (!confirm('Restore backup from ' + new Date(backup.backup_date).toLocaleDateString()
+                                + '?\n\nThe following collections will be DELETED and replaced:\n\n'
+                                + summary
+                                + '\n\nCollections not in this file stay untouched.\n\nCONTINUE?')) {
+                                return;
+                            }
 
-                        // Delete all current data
-                        const loansSnapshot = await getDocs(collection(db, 'loans'));
-                        for (const doc of loansSnapshot.docs) {
-                            await deleteDoc(doc.ref);
-                        }
+                            for (const name of names) {
+                                const snap = await getDocs(collection(db, name));
+                                for (const d of snap.docs) {
+                                    await deleteDoc(d.ref);
+                                }
+                                for (const item of backup.collections[name]) {
+                                    const {id, ...itemData} = item;
+                                    await addDoc(collection(db, name), itemData);
+                                }
+                            }
 
-                        const paymentsSnapshot = await getDocs(collection(db, 'payments'));
-                        for (const doc of paymentsSnapshot.docs) {
-                            await deleteDoc(doc.ref);
-                        }
+                        } else {
+                            // Old format (v1.0) — loans, payments and rates only
+                            if (!backup.loans || !backup.payments || !backup.chfRates) {
+                                alert('❌ Invalid backup file!');
+                                return;
+                            }
 
-                        const ratesSnapshot = await getDocs(collection(db, 'chfRates'));
-                        for (const doc of ratesSnapshot.docs) {
-                            await deleteDoc(doc.ref);
-                        }
+                            if (!confirm('Restore OLD-FORMAT backup from ' + new Date(backup.backup_date).toLocaleDateString()
+                                + '?\n\nThis file only contains loans, payments and rates.\n'
+                                + 'Work contributions, requests, balance and grants are NOT in it\n'
+                                + 'and will stay as they are.\n\nCONTINUE?')) {
+                                return;
+                            }
 
-                        // Restore loans
-                        for (const loan of backup.loans) {
-                            const {id, ...loanData} = loan;
-                            await addDoc(collection(db, 'loans'), loanData);
-                        }
+                            for (const name of ['loans', 'payments', 'chfRates']) {
+                                const snap = await getDocs(collection(db, name));
+                                for (const d of snap.docs) {
+                                    await deleteDoc(d.ref);
+                                }
+                            }
 
-                        // Restore payments
-                        for (const payment of backup.payments) {
-                            const {id, ...paymentData} = payment;
-                            await addDoc(collection(db, 'payments'), paymentData);
-                        }
-
-                        // Restore rates
-                        for (const [year, rate] of Object.entries(backup.chfRates)) {
-                            await addDoc(collection(db, 'chfRates'), {
-                                year: parseInt(year),
-                                rate: parseFloat(rate)
-                            });
+                            for (const loan of backup.loans) {
+                                const {id, ...loanData} = loan;
+                                await addDoc(collection(db, 'loans'), loanData);
+                            }
+                            for (const payment of backup.payments) {
+                                const {id, ...paymentData} = payment;
+                                await addDoc(collection(db, 'payments'), paymentData);
+                            }
+                            for (const [year, rate] of Object.entries(backup.chfRates)) {
+                                await addDoc(collection(db, 'chfRates'), {
+                                    year: parseInt(year),
+                                    rate: parseFloat(rate)
+                                });
+                            }
                         }
 
                         alert('✅ Backup restored successfully!\n\nRefreshing page...');
