@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monthly Support Recipients</title>
+    <title>Monthly Work Contributions</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
@@ -12,7 +12,7 @@
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
                 <div>
-                    <h1 class="text-3xl font-bold text-indigo-900">💝 Monthly Support Recipients</h1>
+                    <h1 class="text-3xl font-bold text-indigo-900">💝 Monthly Work Contributions</h1>
                     <p class="text-gray-600 mt-2">Managing 50 families + 30 singles</p>
                 </div>
                 <button id="addRecipientBtn" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
@@ -63,7 +63,7 @@
                     <option value="">All Types</option>
                     <option value="Family">Families</option>
                     <option value="Single">Singles</option>
-                    <option value="Ministry Support">Ministry Support</option>
+                    <option value="Ministry Support">Voluntary Work</option>
                 </select>
                 <select id="filterTeam" class="px-4 py-2 border rounded-lg">
                     <option value="">All Teams</option>
@@ -88,7 +88,7 @@
                         <tr>
                             <th class="px-4 py-3 text-left">Org</th><th class="px-4 py-3 text-left">Name</th>
                             <th class="px-4 py-3 text-left">Type</th>
-                            <th class="px-4 py-3 text-left">Monthly Amount</th>
+                            <th class="px-4 py-3 text-left">Monthly Contribution</th>
                             <th class="px-4 py-3 text-left">Swiss Account</th>
                             <th class="px-4 py-3 text-left">Team</th>
                             <th class="px-4 py-3 text-left">Bank/UPI</th>
@@ -120,7 +120,7 @@
                             <option value="">Select Type</option>
                             <option value="Family">Family</option>
                             <option value="Single">Single</option>
-                            <option value="Ministry Support">Ministry Support</option>
+                            <option value="Ministry Support">Voluntary Work</option>
                         </select>
                     </div>
                     <div>
@@ -131,7 +131,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-2">Monthly Amount *</label>
+                        <label class="block text-sm font-medium mb-2">Monthly Contribution *</label>
                         <input type="number" step="0.01" id="recipientAmount" required class="w-full px-4 py-2 border rounded-lg">
                     </div>
                     <div>
@@ -403,7 +403,7 @@
         window.deleteRecipient = async function(id, name) {
             if (currentUser.role !== 'admin') return;
             
-            if (!confirm(`Are you sure you want to delete ${name} from the support list?`)) return;
+            if (!confirm(`Are you sure you want to remove ${name} from the work contributions list?`)) return;
             
             try {
                 await deleteDoc(doc(db, 'support_recipients', id));
@@ -514,7 +514,7 @@
             }).join('');
 
             const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-            <title>Hope Support Recipients</title>
+            <title>Hope Work Contributions</title>
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #111; }
@@ -590,7 +590,7 @@
             </style></head><body>
 
             <div class="header">
-                <h1>💝 Hope Association — Monthly Support Recipients</h1>
+                <h1>💝 Hope Association — Monthly Work Contributions</h1>
                 <div class="subtitle">hopeausland-bern.ch &nbsp;·&nbsp; Confidential</div>
             </div>
 
@@ -633,7 +633,7 @@
 
         // Export to CSV
         document.getElementById('exportBtn').onclick = () => {
-            let csv = 'Name,Type,Currency,Monthly Amount,Swiss Account Holder,Team,Bank Account/UPI,Notes\n';
+            let csv = 'Name,Type,Currency,Monthly Contribution,Swiss Account Holder,Team,Bank Account/UPI,Notes\n';
             
             getFilteredRecipients().forEach(r => {
                 csv += `"${r.name}","${r.type}","${r.currency || 'CHF'}",${r.monthly_amount},"${r.swiss_account_holder}","${r.team}","${(() => { const p = []; if (r.account_number) p.push(r.account_number); if (r.ifsc) p.push(r.ifsc); if (r.bank_account && r.bank_account !== r.account_number) p.push(r.bank_account); if (r.account_name) p.push(r.account_name); return p.join(' / ') || ''; })()}","${r.notes || ''}"\n`;
@@ -644,7 +644,7 @@
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'Support_Recipients_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.download = 'Work_Contributions_' + new Date().toISOString().split('T')[0] + '.csv';
             a.click();
             window.URL.revokeObjectURL(url);
         };
