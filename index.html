@@ -213,6 +213,8 @@
                             <option value="Ivan">Ivan</option>
                         </select>
                         <select id="filterLoanGiver" class="px-3 py-1.5 border rounded-lg text-sm">
+                            <option value="__private__">Private only (not Hope)</option>
+                            <option value="__org__">Hope / Seeds / Alive only</option>
                             <option value="">All Funding Partners</option>
                         </select>
                     </div>
@@ -227,6 +229,7 @@
                             <option value="Debt Clearance">Release from Exploitative Debt</option>
                             <option value="Vehicle">Vehicle for Income Generation</option>
                             <option value="Medical Treatment">Medical Treatment</option>
+                            <option value="Family Obligation">Family Obligation — protection from money lenders</option>
                             <option value="Other Reason">Other Reason</option>
                         </select>
                         <select id="filterCurrency" class="px-3 py-1.5 border rounded-lg text-sm">
@@ -343,7 +346,8 @@
     <option value="Debt Clearance">Release from Exploitative Debt</option>
     <option value="Vehicle">Vehicle for Income Generation</option>
     <option value="Medical Treatment">Medical Treatment</option>
-    <option value="Other Reason">Other Reason</option>
+    <option value="Family Obligation">Family Obligation — protection from money lenders</option>
+                            <option value="Other Reason">Other Reason</option>
 </select>
                         <input type="text" id="loanGiver" placeholder="Funding Partner (optional)" class="w-full px-4 py-2 border rounded-lg">
                         <select id="loanCollector" class="w-full px-4 py-2 border rounded-lg" required>
@@ -388,7 +392,7 @@
                             💾 Download Backup
                         </button>
                         <button onclick="restoreFromBackup()" class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-semibold">
-                            📥 Restore from Backup
+                            📥 Restore from Backup (v3)
                         </button>
                     </div>
                 </div>
@@ -893,7 +897,8 @@
             'House Leasing': 'Housing Deposit Support',
             'Real Estate': 'Land for Livelihood',
             'Debt Clearance': 'Release from Exploitative Debt',
-            'Vehicle': 'Vehicle for Income Generation'
+            'Vehicle': 'Vehicle for Income Generation',
+            'Family Obligation': 'Family Obligation — protection from money lenders'
         };
         function purposeLabel(p) {
             return PURPOSE_LABELS[p] || p || '';
@@ -1986,6 +1991,14 @@
             renderLoans();
         }
 
+        // Funding partners of the association. Everything else is a private
+        // loan that does not belong to Hope and stays out of Hope's reports.
+        const ORG_FUNDERS = ['hope', 'seeds', 'alive', 'hope and seeds'];
+        function isPrivateLoan(l) {
+            const g = (l.loan_giver || '').trim().toLowerCase();
+            return g !== '' && !ORG_FUNDERS.includes(g);
+        }
+
         function isMexicoLoan(l) {
             return l.collector === 'Irina' || l.currency === 'MXN';
         }
@@ -2049,7 +2062,9 @@
                 if (filterYear && new Date(l.date).getFullYear().toString() !== filterYear) return false;
                 if (filterCollector && l.collector !== filterCollector) return false;
                 if (filterPurpose && l.purpose !== filterPurpose) return false;
-                if (filterLoanGiver && !(l.loan_giver || '').trim().toLowerCase().includes(filterLoanGiver)) return false;
+                if (filterLoanGiver === '__private__') { if (!isPrivateLoan(l)) return false; }
+                else if (filterLoanGiver === '__org__') { if (isPrivateLoan(l)) return false; }
+                else if (filterLoanGiver && !(l.loan_giver || '').trim().toLowerCase().includes(filterLoanGiver)) return false;
                 if (filterCurrency && l.currency !== filterCurrency) return false;
                 
                 // Filter by status
@@ -2234,9 +2249,12 @@
                         : 'background:#f8faff;border-left:4px solid #6366f1;padding:12px;border-radius:6px';
                     loansHtml += '<div style="' + cardStyle + '">';
                     loansHtml += '<strong>' + purposeLabel(l.purpose) + '</strong>';
+                    const privateTag = isPrivateLoan(l)
+                        ? '<span class="ml-2 bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs font-semibold">PRIVATE — not Hope</span>'
+                        : '';
                     const giverDisplay = l.loan_giver || 'N/A';
                     const giverClickable = l.loan_giver ? '<span style="cursor:pointer;color:#2563eb;text-decoration:underline" onclick="document.getElementById(\'searchInput\').value=\''+l.loan_giver+'\';renderLoans();" title="Search for this loan giver">' + giverDisplay + '</span>' : giverDisplay;
-                    loansHtml += '<p class="text-sm"><strong>Loan Giver:</strong> ' + giverClickable + '</p>';
+                    loansHtml += '<p class="text-sm"><strong>Loan Giver:</strong> ' + giverClickable + privateTag + '</p>';
                     loansHtml += collectorInfo;
                     const mpCurSymbol = mpCur === 'CHF' ? 'CHF ' : mpCur === 'MXN' ? 'MXN $' : '₹';
                     const monthlyDisplay = l.monthly_payment > 0 ? mpCurSymbol + l.monthly_payment.toLocaleString('en-IN') : 'No monthly payment';
@@ -3116,7 +3134,8 @@
                 const amount = parseFloat(loan.amount) || 0;
                 const amountInINR = loan.currency === 'INR' ? amount : amount * rate;
                 return [
-                    loan.borrower_name, loan.date, purposeLabel(loan.purpose), loan.loan_giver || '',
+                    loan.borrower_name, loan.date, purposeLabel(loan.purpose),
+                    (isPrivateLoan(loan) ? 'PRIVATE — ' : '') + (loan.loan_giver || ''),
                     loan.currency || 'INR', amount, Math.round(amountInINR),
                     parseInt(loan.months) || 0, parseFloat(loan.monthly_payment) || 0, stats.paid
                 ];
@@ -3218,19 +3237,22 @@
                 return;
             }
             
-            let csv = 'HOPE ASSOCIATION - ALL LOANS SUMMARY\n';
+            const hopeLoans = loans.filter(l => !isPrivateLoan(l));
+            const privateCount = loans.length - hopeLoans.length;
+            let csv = 'HOPE ASSOCIATION - ALL ADVANCES SUMMARY\n';
             csv += 'Export Date: ' + new Date().toLocaleDateString('en-IN') + '\n';
-            csv += 'Total Loans: ' + loans.length + '\n\n';
+            csv += 'Total Advances: ' + hopeLoans.length + '\n';
+            csv += 'Private advances excluded: ' + privateCount + '\n\n';
             csv += 'Borrower,Loan Date,Purpose,Loan Giver,Currency,Amount,INR Amount,Months,Monthly Payment,Total Paid,Remaining,Progress %,Payments Made,Comments\n';
             
-            loans.forEach(loan => {
+            hopeLoans.forEach(loan => {
                 const stats = getStats(loan);
                 const rate = getChfRate(loan.date);
                 const amountInINR = loan.currency === 'INR' ? loan.amount : loan.amount * rate;
                 csv += '"' + loan.borrower_name + '",' + loan.date + ',"' + loan.purpose + '","' + (loan.loan_giver || '') + '",' + loan.currency + ',' + loan.amount + ',Rs ' + amountInINR.toLocaleString('en-IN') + ',' + loan.months + ',Rs ' + loan.monthly_payment.toLocaleString('en-IN') + ',Rs ' + stats.paid.toLocaleString('en-IN') + ',Rs ' + stats.remaining.toLocaleString('en-IN') + ',' + stats.progress.toFixed(1) + '%,' + stats.count + ' of ' + loan.months + ',"' + (loan.comments || '') + '"\n';
             });
             
-            const totalBorrowed = loans.reduce((sum, l) => {
+            const totalBorrowed = hopeLoans.reduce((sum, l) => {
                 const rate = getChfRate(l.date);
                 return sum + (l.currency === 'INR' ? l.amount : l.amount * rate);
             }, 0);
@@ -3359,20 +3381,53 @@
                                 return;
                             }
 
-                            for (const name of names) {
-                                const snap = await getDocs(collection(db, name));
-                                for (const d of snap.docs) {
-                                    await deleteDoc(d.ref);
-                                }
-                                for (const item of backup.collections[name]) {
-                                    const {id, ...itemData} = item;
-                                    // Keep the original ID — payments point to advances via loan_id
-                                    if (id) {
-                                        await setDoc(doc(db, name, id), itemData);
-                                    } else {
-                                        await addDoc(collection(db, name), itemData);
+                            // Progress overlay — the restore takes a few minutes
+                            const ov = document.createElement('div');
+                            ov.id = 'restoreOverlay';
+                            ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
+                            ov.innerHTML = '<div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:440px;width:90%;text-align:center;font-family:sans-serif;">'
+                                + '<div style="font-size:1.2rem;font-weight:700;margin-bottom:8px;">⏳ Restoring backup…</div>'
+                                + '<div style="color:#b91c1c;font-weight:600;margin-bottom:14px;">Do NOT close or reload this page.</div>'
+                                + '<div id="restoreStep" style="margin-bottom:10px;color:#374151;"></div>'
+                                + '<div style="background:#e5e7eb;border-radius:6px;height:12px;overflow:hidden;"><div id="restoreBar" style="background:#4f46e5;height:100%;width:0%;transition:width .2s;"></div></div>'
+                                + '<div id="restorePct" style="margin-top:8px;font-size:0.9rem;color:#6b7280;"></div></div>';
+                            document.body.appendChild(ov);
+                            window.onbeforeunload = () => 'Restore in progress';
+
+                            const total = names.reduce((a, n) => a + backup.collections[n].length, 0);
+                            let done = 0;
+                            const upd = (label) => {
+                                document.getElementById('restoreStep').textContent = label;
+                                const p = total ? Math.round(done / total * 100) : 100;
+                                document.getElementById('restoreBar').style.width = p + '%';
+                                document.getElementById('restorePct').textContent = done + ' / ' + total + ' records (' + p + '%)';
+                            };
+
+                            try {
+                                for (const name of names) {
+                                    upd('Clearing ' + name + '…');
+                                    const snap = await getDocs(collection(db, name));
+                                    for (const d of snap.docs) {
+                                        await deleteDoc(d.ref);
+                                    }
+                                    let i = 0;
+                                    for (const item of backup.collections[name]) {
+                                        const {id, ...itemData} = item;
+                                        // Keep the original ID — payments point to advances via loan_id
+                                        if (id) {
+                                            await setDoc(doc(db, name, id), itemData);
+                                        } else {
+                                            await addDoc(collection(db, name), itemData);
+                                        }
+                                        done++; i++;
+                                        if (i % 10 === 0 || i === backup.collections[name].length) {
+                                            upd('Writing ' + name + ' (' + i + ' / ' + backup.collections[name].length + ')');
+                                        }
                                     }
                                 }
+                            } finally {
+                                window.onbeforeunload = null;
+                                ov.remove();
                             }
 
                         } else {

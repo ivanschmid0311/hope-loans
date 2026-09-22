@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hope Association – Support Fund Regulations</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --hope-blue: #3b4fd8;
+    --hope-dark: #1a1f4e;
+    --hope-light: #f0f2ff;
+    --hope-accent: #e8a020;
+    --text: #2d2d2d;
+    --muted: #6b7280;
+    --border: #d1d5db;
+    --success: #16a34a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f7f8fc;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--hope-dark);
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-logo {
+    width: 44px; height: 44px;
+    background: var(--hope-blue);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .header-text h1 {
+    font-family: 'Lora', serif;
+    font-size: 1.3rem;
+    color: #fff;
+    font-weight: 600;
+  }
+  .header-text p {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.55);
+    margin-top: 1px;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, var(--hope-blue) 0%, #5b6ef5 100%);
+    padding: 36px 32px 32px;
+    color: white;
+  }
+  .hero h2 {
+    font-family: 'Lora', serif;
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .hero p {
+    font-size: 0.95rem;
+    opacity: 0.88;
+    max-width: 620px;
+    line-height: 1.65;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+  }
+
+  .section {
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #eef0f5;
+    background: var(--hope-light);
+  }
+  .section-header .icon { font-size: 20px; }
+  .section-header h3 {
+    font-family: 'Lora', serif;
+    font-size: 1.1rem;
+    color: var(--hope-dark);
+    font-weight: 600;
+  }
+  .section-body { padding: 22px 24px; }
+  .section-body p { font-size: 0.96rem; line-height: 1.7; margin-bottom: 12px; }
+  .section-body p:last-child { margin-bottom: 0; }
+  .section-body ul { margin: 0 0 12px 0; padding-left: 20px; }
+  .section-body li { font-size: 0.96rem; line-height: 1.7; margin-bottom: 8px; }
+  .section-body li:last-child { margin-bottom: 0; }
+  .lead {
+    font-weight: 500;
+    color: var(--hope-dark);
+  }
+
+  .highlight {
+    background: #f0fdf4;
+    border-left: 4px solid var(--success);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .highlight p { margin: 0; font-size: 0.96rem; line-height: 1.65; }
+
+  .footer {
+    text-align: center;
+    padding: 8px 24px 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .footer a { color: var(--hope-blue); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 600px) {
+    .hero { padding: 28px 20px 24px; }
+    .hero h2 { font-size: 1.45rem; }
+    .section-body { padding: 18px 18px; }
+  }
+
+  table.auth {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6px 0 14px;
+    font-size: 0.93rem;
+  }
+  table.auth th, table.auth td {
+    border: 1px solid #e3e6ef;
+    padding: 9px 12px;
+    text-align: left;
+    line-height: 1.5;
+  }
+  table.auth th {
+    background: var(--hope-light);
+    color: var(--hope-dark);
+    font-weight: 600;
+  }
+  .note {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 12px;
+  }
+  .approved {
+    background: #f8f9ff;
+    border: 1px solid #dfe3f7;
+    border-radius: 12px;
+    padding: 18px 20px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+</style>
+</head><body>
+
+<div class="header">
+  <div class="header-logo">🕊️</div>
+  <div class="header-text">
+    <h1>Hope Association</h1>
+    <p>hopeausland-bern.ch</p>
+  </div>
+</div>
+
+<div class="hero">
+  <h2>Support Fund Regulations</h2>
+  <p>Hope Association provides <strong>interest-free</strong> loans and contributions to people in need,
+     so they can build a livelihood and stand on their own feet. No interest is charged and we make no profit —
+     every amount paid back goes straight into the fund to help the next person. These regulations set out
+     who can be supported, what for, who decides, and how repayment works.</p>
+</div>
+
+<div class="container">
+
+  <div class="section">
+    <div class="section-header"><span class="icon">🎯</span><h3>1. Purpose</h3></div>
+    <div class="section-body">
+      <p>Verein Hope Bern operates a support fund for people in need, mainly in India, Nepal, Mexico,
+         Pakistan and Syria. The fund enables people to build their own livelihood and to live in dignity.</p>
+      <p>The fund provides two kinds of assistance:</p>
+      <ul>
+        <li><strong>Interest-free loans</strong> to individuals and families, to create or secure a livelihood.</li>
+        <li><strong>Work contributions</strong> to people who carry out social work voluntarily and on their own
+            responsibility. A work contribution is a grant without consideration in return and does not create
+            an employment or service relationship.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="icon">🤝</span><h3>2. Principles</h3></div>
+    <div class="section-body">
+      <div class="highlight">
+        <p><strong>Interest-free:</strong> no interest, fees or commission of any kind is charged.
+           Only the amount received is repaid.</p>
+      </div>
+      <ul>
+        <li><strong>No commercial purpose</strong> — the association makes no profit from the fund.</li>
+        <li><strong>Revolving character</strong> — repayments remain in the fund and are used to support others.</li>
+        <li><strong>No benefit to members</strong> — members and governing bodies of the association receive
+            no assistance from the fund.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="icon">🫱</span><h3>3. Who is supported</h3></div>
+    <div class="section-body">
+      <p class="lead">Assistance is given to people who are in need and who have no access to fair and
+         affordable financing. Need is the sole criterion.</p>
+      <p>Assistance is given regardless of religion, caste, ethnic background, gender and political conviction.
+         Membership of a community, organisation or religion is neither required nor expected. No service in
+         return is requested.</p>
+      <p>Recipients may also be local partners who carry out coordinating tasks for the association.
+         Section 6 applies to such cases.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="icon">🌱</span><h3>4. Permitted use</h3></div>
+    <div class="section-body">
+      <p class="lead">Assistance is given in particular for:</p>
+      <ul>
+        <li>Setting up a small trade or self-employed activity</li>
+        <li>Means of earning a living, such as vehicles or equipment used to generate income</li>
+        <li>Land used for subsistence or to generate income</li>
+        <li>Education, school and college fees, vocational training</li>
+        <li>Medical treatment that would otherwise be out of reach</li>
+        <li>Housing: rental deposits as well as building and repair work on the family's own home</li>
+        <li>Release from debts owed to money lenders charging ruinous interest</li>
+        <li>Unavoidable family obligations, in particular the marriage of a child, where without
+            assistance the family would otherwise borrow from money lenders at ruinous interest.
+            What matters is not the occasion but preventing the family from falling into debt.</li>
+        <li>Social initiatives for the benefit of a community</li>
+      </ul>
+      <p class="lead">Excluded are:</p>
+      <ul>
+        <li>Investment, speculation and the acquisition of assets for investment purposes</li>
+        <li>Businesses aimed at maximising profit rather than securing a family's livelihood</li>
+        <li>Consumer spending without lasting benefit</li>
+        <li>Political and religious worship purposes</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="icon">📋</span><h3>5. Application and decision</h3></div>
+    <div class="section-body">
+      <p>Applications are submitted in writing using the designated form. They state the applicant's
+         circumstances, the need, the intended use and the proposed repayment.</p>
+      <p>The local coordinator reviews the application and gives an opinion. Decisions are taken according
+         to the following levels of authority:</p>
+      <table class="auth">
+        <tr><th>Amount</th><th>Decision-making authority</th></tr>
+        <tr><td>up to CHF 2,000</td><td>Managing Director alone</td></tr>
+        <tr><td>CHF 2,000 to 10,000</td><td>Managing Director and one board member</td></tr>
+        <tr><td>above CHF 10,000</td><td>The Board</td></tr>
+        <tr><td>Applications under section 6</td><td>The Board, without the person concerned</td></tr>
+      </table>
+      <p class="note">The thresholds are set by the Board and may be adjusted.</p>
+      <p><strong>Co-funding partner organisations:</strong> part of the funds comes from partner organisations,
+         in particular Verein Seeds and Alive. Where an application is funded wholly or partly by a
+         partner organisation, the decision is taken in consultation with that organisation. The consultation
+         and the persons involved are documented. The source of funds is recorded for every payment.</p>
+      <p>Every decision is recorded with date, amount, purpose and the persons deciding. Rejections are
+         documented as well.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="icon">⚖️</span><h3>6. Conflicts of interest and recusal</h3></div>
+    <div class="section-body">
+      <p>People who carry out coordinating or operational tasks for the association may receive assistance
+         from the fund. The same conditions apply to them as to all other recipients; more generous amounts
+         or easier repayment terms are not permitted.</p>
+      <p>Applications from such people, and applications from people close to them, are decided by the Board.
+         The person concerned, and the Managing Director where he or she has a business or personal connection
+         with that person, must recuse themselves.</p>
+      <p>Existing business relationships between officers of the association and recipients are disclosed to
+         the Board and recorded in the minutes.</p>
+      <p><strong>Overlapping roles with partner organisations:</strong> where a person holds positions both in
+         Verein Hope Bern and in a co-funding partner organisation, this is disclosed to both bodies and noted
+         in the minutes. In joint decisions, that person's vote counts only once.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="icon">💙</span><h3>7. Repayment</h3></div>
+    <div class="section-body">
+      <ul>
+        <li>Repayment is made in agreed monthly amounts, set according to the recipient's economic situation.</li>
+        <li><strong>No collateral is required.</strong></li>
+        <li><strong>No default interest, reminder fees or penalties are charged.</strong> The association uses
+            no debt collection agencies.</li>
+        <li>In case of illness, crop failure or other hardship, repayment may be suspended or adjusted.</li>
+        <li>In cases of serious hardship the remaining amount may be waived in whole or in part. A waiver is
+            documented with reasons and decided according to the levels of authority in section 5.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="icon">📒</span><h3>8. Loan and work contribution</h3></div>
+    <div class="section-body">
+      <p>Loans and work contributions are legally and financially separate transactions. A loan is a receivable
+         of the association; a work contribution is a grant without consideration in return.</p>
+      <p>Where the two are set off against each other and only the difference is transferred, each must still
+         be recorded separately: the work contribution as an expense, the repayment as an inflow against the
+         receivable. Net settlement without separate recording is not permitted.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="icon">🏛️</span><h3>9. Records and accountability</h3></div>
+    <div class="section-body">
+      <ul>
+        <li>Applications, decisions, payments and repayments are recorded in full.</li>
+        <li>Recipients of work contributions submit a short annual report on their activity.</li>
+        <li>Payments are made directly to the recipient or organisation wherever possible. Where this is not
+            possible for legal or practical reasons, the payment route is justified in writing and the onward
+            transfer is evidenced.</li>
+        <li>The balance of the fund, the assistance granted and the repayments received are disclosed in the
+            annual accounts.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="icon">✍️</span><h3>10. Final provisions</h3></div>
+    <div class="section-body">
+      <div class="approved">
+        <p>These regulations were approved by the Board of Verein Hope Bern on <strong>__________</strong>
+           and take effect on <strong>__________</strong>. Amendments require a decision of the Board.</p>
+        <p style="margin-top:10px;">Verein Hope Bern – Evangelisches Gemeinschaftswerk,
+           Brunnmattstrasse 50, 3007 Bern, Switzerland.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p><a href="loan_request.html">← Back to the request page</a></p>
+  </div>
+
+</div>
+
+</body>
+</html>
