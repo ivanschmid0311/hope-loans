@@ -520,7 +520,7 @@
             'isaac@hope.org': {role: 'collector', name: 'Isaac', region: 'india'},
             'ida@hope.org': {role: 'collector', name: 'Ida', region: 'india'},
             'oli@hope.org': {role: 'admin', name: 'Oli', region: 'india'},
-            'suresh@hope.org': {role: 'collector', name: 'Suresh', region: 'india'},
+            'suresh@hope.org': {role: 'collector', name: 'Suresh', region: 'india', allExceptMexico: true},
             'edward@hope.org': {role: 'collector', name: 'Edward', region: 'india'},
             'irina@hope.org': {role: 'collector', name: 'Irina', region: 'mexico'},
             'katharina@hope.org': {role: 'collector', name: 'Katharina', region: 'india'},
@@ -1650,7 +1650,6 @@
         }
 
         async function recordPayment(loanId, fromReminder) {
-            if (blockIfOwnLoan(loanId)) return;
             const loan = loans.find(l => l.id === loanId);
             if (!loan) return;
 
@@ -2020,7 +2019,7 @@
         }
         function blockIfOwnLoan(loanId) {
             if (isLockedLoan(loanId)) {
-                alert('🔒 This is your own advance.\n\nYou can view it, but payments and changes must be entered by someone else (see section 6 of the fund regulations).');
+                alert('🔒 This is your own advance.\n\nYou can record payments on it, but the terms cannot be changed, forgiven or deleted by you (see section 6 of the fund regulations).');
                 return true;
             }
             return false;
@@ -2268,7 +2267,13 @@
                     const isPaidInFull = effectiveRemaining <= 1;
                     
                     if (isOwnLoan(l)) {
-                        loansHtml += '<span class="bg-gray-100 text-gray-600 px-3 py-1 rounded text-sm">🔒 Own advance — view only</span>';
+                        // Own advance: recording allowed, terms locked
+                        if (isPaidInFull) {
+                            loansHtml += '<button disabled class="bg-gray-300 text-gray-500 px-4 py-1 rounded text-sm cursor-not-allowed">Record Payment</button>';
+                        } else {
+                            loansHtml += '<button onclick="recordPayment(\'' + l.id + '\')" class="bg-indigo-600 text-white px-4 py-1 rounded text-sm hover:bg-indigo-700">Record Payment</button>';
+                        }
+                        loansHtml += '<span class="bg-amber-100 text-amber-800 px-3 py-1 rounded text-sm font-semibold">🔒 Own advance — terms locked</span>';
                     } else if (isPaidInFull) {
                         loansHtml += '<button disabled class="bg-gray-300 text-gray-500 px-4 py-1 rounded text-sm cursor-not-allowed">Record Payment</button>';
                         loansHtml += '<button disabled class="bg-gray-300 text-gray-500 px-4 py-1 rounded text-sm cursor-not-allowed">🕊️ Forgive</button>';
@@ -2498,21 +2503,21 @@
                             </div>
                         </div>
 
-                        ${isOwnLoan(loan) ? `<div class="text-center bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm">🔒 Own advance — view only. Payments are entered by someone else.</div>` : `<div class="flex gap-2">
+                        ${isOwnLoan(loan) ? `<div class="text-center bg-amber-50 text-amber-800 px-3 py-1 rounded text-xs font-semibold mb-2">🔒 Your own advance — the entry is recorded under your name</div>` : ''}
+                        <div class="flex gap-2">
                             <button onclick="recordPayment('${loan.id}', true)" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-semibold">
                                 ✅ Record Payment
                             </button>
                             <button onclick="recordMissedPayment('${loan.id}')" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 font-semibold">
                                 ❌ No Payment
                             </button>
-                        </div>`}
+                        </div>
                     </div>
                 </div>`;
             }).join('');
         }
 
         async function recordMissedPayment(loanId) {
-            if (blockIfOwnLoan(loanId)) return;
             const loan = loans.find(l => l.id === loanId);
             if (!loan) return;
             
@@ -2729,18 +2734,12 @@
                     updated_at: new Date().toISOString()
                 });
                 
-                // If first_payment_due changed, offer to delete payments before that date
+                // Payment history is NEVER touched when loan terms change.
+                // Changing the first-due date only affects future expectations.
                 if (newFirstPaymentDue && newFirstPaymentDue !== (loan.first_payment_due || '')) {
-                    const fpd = new Date(newFirstPaymentDue);
-                    const loanPayments = payments.filter(p => p.loan_id === loanId);
-                    const earlyPayments = loanPayments.filter(p => new Date(p.date) < fpd);
-                    
-                    if (earlyPayments.length > 0) {
-                        if (confirm(`Found ${earlyPayments.length} payment(s) before the new First Payment Due date (${newFirstPaymentDue}).\n\nDelete these payments?`)) {
-                            for (const p of earlyPayments) {
-                                await deleteDoc(doc(db, 'payments', p.id));
-                            }
-                        }
+                    const early = payments.filter(p => p.loan_id === loanId && new Date(p.date) < new Date(newFirstPaymentDue));
+                    if (early.length > 0) {
+                        alert('ℹ️ Note: ' + early.length + ' payment(s) were recorded before the new First Payment Due date.\n\nThey have been KEPT — payment history is never deleted when loan terms change.');
                     }
                 }
                 
